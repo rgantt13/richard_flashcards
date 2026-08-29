@@ -1,11 +1,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.9.12112.369 stable
+VisualStudioVersion = 18.9.12112.369
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{AA928D75-C7F0-55EB-AA96-4376B44DB617}"
-	ProjectSection(SolutionItems) = preProject
-		DevNotes.md = DevNotes.md
-	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{89679AD8-958A-5482-82C0-926F0817A1F4}"
 EndProject
