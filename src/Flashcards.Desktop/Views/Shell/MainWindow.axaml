@@ -1,0 +1,48 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:Flashcards.Desktop.ViewModels.Shell"
+        x:Class="Flashcards.Desktop.Views.Shell.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Title="Flashcards"
+        Width="1320" Height="880"
+        MinWidth="1040" MinHeight="680"
+        WindowStartupLocation="CenterScreen">
+
+    <Grid ColumnDefinitions="228,*">
+
+        <!-- Sidebar -->
+        <Border Grid.Column="0"
+                Background="{DynamicResource SemiColorBackground0}"
+                BorderBrush="{DynamicResource SemiColorBorder}"
+                BorderThickness="0,0,1,0">
+            <DockPanel Margin="0,18,0,14">
+
+                <StackPanel DockPanel.Dock="Top" Margin="20,0,20,20" Spacing="2">
+                    <TextBlock Text="Flashcards" FontSize="19" FontWeight="Bold" />
+                    <TextBlock Text="spaced repetition, locally" Classes="muted" />
+                </StackPanel>
+
+                <ListBox ItemsSource="{Binding Navigation}"
+                         SelectedItem="{Binding SelectedNavigation, Mode=TwoWay}"
+                         Background="Transparent"
+                         BorderThickness="0"
+                         Margin="10,0">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="vm:NavigationItem">
+                            <StackPanel Spacing="1" Margin="4,6">
+                                <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="14" />
+                                <TextBlock Text="{Binding Description}" Classes="muted" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+            </DockPanel>
+        </Border>
+
+        <!-- Active panel. The ViewLocator in App.axaml resolves the view for whatever
+             view model CurrentPanel holds. -->
+        <ContentControl Grid.Column="1" Content="{Binding CurrentPanel}" />
+
+    </Grid>
+</Window>

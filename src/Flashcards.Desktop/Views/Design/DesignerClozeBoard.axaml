@@ -1,0 +1,104 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:Flashcards.Desktop.ViewModels.Design"
+             xmlns:shared="clr-namespace:Flashcards.Desktop.ViewModels.Shared"
+             xmlns:subjvm="clr-namespace:Flashcards.Desktop.ViewModels.Subjects"
+             xmlns:controls="clr-namespace:Flashcards.Desktop.Controls.Shared"
+             xmlns:subj="clr-namespace:Flashcards.Desktop.Controls.Subjects"
+             xmlns:contracts="clr-namespace:Flashcards.Application.Contracts;assembly=Flashcards.Application"
+             xmlns:cards="clr-namespace:Flashcards.Domain.Cards;assembly=Flashcards.Domain"
+             x:DataType="vm:CardEditorViewModel"
+             x:Class="Flashcards.Desktop.Views.Design.DesignerClozeBoard">
+
+    <!--
+        A fill-in-the-blank card: one passage you carve blanks out of by selecting words and\n        pressing Make blank. Each blank is tested on its own.
+
+        Shown by CardEditorView when the card type matches. Its DataContext is the same
+        CardEditorViewModel, and the styles it draws with (sheet, element, faceLabel, addElement)
+        are declared on CardEditorView and reach it by being an ancestor.
+    -->
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="avares://Flashcards.Desktop/Views/Design/DesignerResources.axaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+        <StackPanel IsVisible="{Binding IsCloze}">
+
+            <Border Classes="sheet">
+                <StackPanel Spacing="10">
+
+                    <TextBlock Text="PASSAGE" Classes="faceLabel" Margin="2,0,0,0" />
+                    <TextBlock Classes="muted" TextWrapping="Wrap"
+                               Text="Write the whole sentence, select the words you want hidden, then press Make blank. Each blank is tested on its own." />
+
+                    <TextBox Text="{Binding ClozeBlock.Text, Mode=TwoWay}"
+                             AcceptsReturn="True"
+                             TextWrapping="Wrap"
+                             MinHeight="130"
+                             FontSize="14"
+                             SelectionStart="{Binding ClozeBlock.SelectionStart, Mode=TwoWay}"
+                             SelectionEnd="{Binding ClozeBlock.SelectionEnd, Mode=TwoWay}"
+                             Watermark="The mitochondrion is the powerhouse of the cell." />
+
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <!-- Focusable=False so pressing it does not pull focus out
+                             of the passage and disturb the selection it acts on. -->
+                        <Button Content="Make blank"
+                                Classes="Primary"
+                                Focusable="False"
+                                Command="{Binding MakeBlankCommand}"
+                                CommandParameter="{Binding ClozeBlock}" />
+                        <Button Content="Clear all blanks"
+                                Command="{Binding ClearBlanksCommand}"
+                                IsEnabled="{Binding HasBlanks}" />
+                    </StackPanel>
+
+                </StackPanel>
+            </Border>
+
+            <!-- What the learner will actually be shown -->
+            <Border Classes="sheet">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="AS THE LEARNER SEES IT" Classes="faceLabel" Margin="2,0,0,0" />
+
+                    <Border Background="{DynamicResource SemiColorFill0}"
+                            CornerRadius="7" Padding="14">
+                        <TextBlock Text="{Binding ClozePrompt}"
+                                   TextWrapping="Wrap" FontSize="14" />
+                    </Border>
+
+                    <TextBlock Text="No blanks yet — select some words above and press Make blank."
+                               Classes="muted"
+                               TextWrapping="Wrap"
+                               IsVisible="{Binding HasBlanks, Converter={StaticResource NotNull}, ConverterParameter=invert}" />
+
+                    <ItemsControl ItemsSource="{Binding ClozeBlanks}" IsVisible="{Binding HasBlanks}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="cards:ClozeBlank">
+                                <Border Classes="chip"
+                                        Background="{DynamicResource SemiColorPrimaryLight}"
+                                        Margin="0,0,6,6">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <TextBlock Text="{Binding Index}" FontWeight="Bold" FontSize="11" Opacity="0.6" />
+                                        <TextBlock Text="{Binding Answer}" FontSize="12" />
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+
+</UserControl>

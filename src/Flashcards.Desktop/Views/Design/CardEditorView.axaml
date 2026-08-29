@@ -1,0 +1,735 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:Flashcards.Desktop.ViewModels.Design"
+             xmlns:shared="clr-namespace:Flashcards.Desktop.ViewModels.Shared"
+             xmlns:subjvm="clr-namespace:Flashcards.Desktop.ViewModels.Subjects"
+             xmlns:controls="clr-namespace:Flashcards.Desktop.Controls.Shared"
+             xmlns:subj="clr-namespace:Flashcards.Desktop.Controls.Subjects"
+             xmlns:contracts="clr-namespace:Flashcards.Application.Contracts;assembly=Flashcards.Application"
+             xmlns:cards="clr-namespace:Flashcards.Domain.Cards;assembly=Flashcards.Domain"
+             xmlns:views="clr-namespace:Flashcards.Desktop.Views.Design"
+             x:Class="Flashcards.Desktop.Views.Design.CardEditorView"
+             x:DataType="vm:CardEditorViewModel"
+             x:Name="Root">
+
+    <!--
+        The card designer.
+
+        Four artboards behind one chrome: a free block stack for question/answer cards, a fixed
+        1-question + 4-answer board for multiple choice, a passage-with-blanks board for cloze, and
+        a freeform canvas of positioned elements plus ink.
+
+        Everything that edits an element lives on the element — the add buttons under each face,
+        the handles on each block, the picture controls on each answer slot, the toolbar above the
+        freeform canvas. There is deliberately no inspector panel: a second place to change the
+        same thing is a second place for the two to disagree, and the canvas is wide enough to be
+        worth the whole window.
+    -->
+
+    <UserControl.Styles>
+
+        <!--
+            The surface the card floats on. Transparent so the panel's mode tint shows through it —
+            see Grid.designer below, which is what actually carries the colour.
+        -->
+        <Style Selector="Border.canvas">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+
+        <!--
+            ····· mode ·····
+
+            The whole panel is tinted by which mode it is in: a darkened blue while creating, a
+            darkened green while editing. It is deliberately a whole-surface signal rather than a
+            badge — the thing it guards against is finishing a card and only then noticing you had
+            been overwriting an existing one, which a small indicator in a corner does not prevent.
+
+            Fixed hexes rather than theme tokens: these are dark-end tints of the primary and
+            success colours, and the theme has no token for "that colour, but as a backdrop".
+        -->
+        <Style Selector="Grid.designer.creating">
+            <Setter Property="Background" Value="#0F1826" />
+        </Style>
+
+        <Style Selector="Grid.designer.editing">
+            <Setter Property="Background" Value="#0E1F17" />
+        </Style>
+
+        <Style Selector="Grid.designer">
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.2" />
+                </Transitions>
+            </Setter>
+        </Style>
+
+        <!-- The Create | Edit pill: one track, two segments, the live one filled. -->
+        <Style Selector="Border.modePill">
+            <Setter Property="CornerRadius" Value="9" />
+            <Setter Property="Padding" Value="3" />
+            <Setter Property="Background" Value="{DynamicResource SemiColorFill0}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SemiColorBorder}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Bottom" />
+        </Style>
+
+        <Style Selector="Button.modeSegment">
+            <Setter Property="MinWidth" Value="92" />
+            <Setter Property="Padding" Value="18,7" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+        </Style>
+
+        <Style Selector="Button.modeSegment > TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Opacity" Value="0.45" />
+        </Style>
+
+        <Style Selector="Button.modeSegment.active > TextBlock">
+            <Setter Property="Opacity" Value="1" />
+            <!-- Both fills are saturated, so the label is pinned rather than following the theme. -->
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+
+        <Style Selector="Button.modeSegment.createSide.active">
+            <Setter Property="Background" Value="{DynamicResource SemiColorPrimary}" />
+        </Style>
+
+        <Style Selector="Button.modeSegment.editSide.active">
+            <Setter Property="Background" Value="{DynamicResource SemiColorSuccess}" />
+        </Style>
+
+        <!-- Only the inactive Create side is pressable, so only it reacts to the pointer. -->
+        <Style Selector="Button.modeSegment.createSide:pointerover > TextBlock">
+            <Setter Property="Opacity" Value="0.8" />
+        </Style>
+
+        <Style Selector="Button.modeSegment.createSide.active:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SemiColorPrimary}" />
+        </Style>
+
+        <Style Selector="Button.modeSegment.createSide.active:pointerover > TextBlock">
+            <Setter Property="Opacity" Value="1" />
+        </Style>
+
+        <!-- One face of the card: a white-ish sheet with a soft edge. -->
+        <Style Selector="Border.sheet">
+            <Setter Property="Background" Value="{DynamicResource SemiColorBackground1}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SemiColorBorder}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Padding" Value="18" />
+            <Setter Property="Margin" Value="0,0,0,18" />
+        </Style>
+
+        <!-- A selectable element on the artboard. -->
+        <Style Selector="Border.element">
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="2" />
+            <Setter Property="CornerRadius" Value="7" />
+            <Setter Property="Padding" Value="2" />
+            <Setter Property="Margin" Value="0,0,0,8" />
+        </Style>
+
+        <Style Selector="Border.element:pointerover">
+            <Setter Property="BorderBrush" Value="{DynamicResource SemiColorBorder}" />
+        </Style>
+
+        <!-- The selection ring. This is the designer's primary feedback, so it is loud on purpose. -->
+        <Style Selector="Border.element.selected">
+            <Setter Property="BorderBrush" Value="{DynamicResource SemiColorPrimary}" />
+        </Style>
+
+        <Style Selector="Border.element.selected:pointerover">
+            <Setter Property="BorderBrush" Value="{DynamicResource SemiColorPrimary}" />
+        </Style>
+
+        <!-- Multiple-choice answer tile. -->
+        <Style Selector="Border.slot">
+            <Setter Property="Background" Value="{DynamicResource SemiColorBackground1}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SemiColorBorder}" />
+            <Setter Property="BorderThickness" Value="2" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Padding" Value="12" />
+            <Setter Property="Margin" Value="6" />
+            <Setter Property="MinHeight" Value="150" />
+        </Style>
+
+        <Style Selector="Border.slot.selected">
+            <Setter Property="BorderBrush" Value="{DynamicResource SemiColorPrimary}" />
+        </Style>
+
+        <!-- A slot marked as a correct answer gets a green edge even when unselected. -->
+        <Style Selector="Border.slot.correct">
+            <Setter Property="BorderBrush" Value="{DynamicResource SemiColorSuccess}" />
+        </Style>
+
+        <!--
+            The tag strip: a fixed-height lane the chips scroll sideways inside. Bordered so it
+            reads as a container even when empty, which is also what tells you where tags land.
+        -->
+        <Style Selector="Border.tagStrip">
+            <Setter Property="Background" Value="{DynamicResource SemiColorFill0}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SemiColorBorder}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="6,4" />
+            <!-- Fills the row rather than setting its height; see the header grid. -->
+            <Setter Property="VerticalAlignment" Value="Stretch" />
+        </Style>
+
+        <!--
+            One row of a subject drop-down — both the pick-an-existing-subject list and the
+            parent picker. Chromeless so the list reads as a list rather than a column of buttons.
+        -->
+        <Style Selector="Button.subjectOption">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Padding" Value="8,5" />
+            <Setter Property="Margin" Value="0,0,0,2" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <!--
+                Not focusable, so picking a subject does not blur the name box. The popup closes on
+                that blur, and a row that closed the popup on press would be destroyed before its
+                own click ever fired.
+            -->
+            <Setter Property="Focusable" Value="False" />
+        </Style>
+
+        <Style Selector="Button.subjectOption:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SemiColorFill1}" />
+        </Style>
+
+        <!--
+            The footer pair. Same reactive treatment as the Study panel's start buttons: lift on
+            hover, settle on press, fade when there is nothing to do.
+        -->
+        <Style Selector="Button.commit">
+            <Setter Property="MinWidth" Value="132" />
+            <Setter Property="Padding" Value="18,10" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="CornerRadius" Value="9" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="Background" Value="{DynamicResource SemiColorPrimary}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SemiColorPrimary}" />
+            <Setter Property="BorderThickness" Value="1" />
+        </Style>
+
+        <!-- Pinned white: the fill is saturated, so the label should not follow the theme. -->
+        <Style Selector="Button.commit TextBlock">
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+
+        <Style Selector="Button.discard">
+            <Setter Property="Width" Value="42" />
+            <Setter Property="Height" Value="40" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="CornerRadius" Value="9" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SemiColorBorder}" />
+            <Setter Property="Opacity" Value="0.7" />
+        </Style>
+
+        <!-- Turns red only on approach, so it never reads as the thing to press. -->
+        <Style Selector="Button.discard:pointerover">
+            <Setter Property="Opacity" Value="1" />
+            <Setter Property="Foreground" Value="{DynamicResource SemiColorDanger}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SemiColorDanger}" />
+        </Style>
+
+        <Style Selector="Button.commit:pointerover, Button.discard:pointerover">
+            <Setter Property="RenderTransform" Value="scale(1.03)" />
+        </Style>
+
+        <Style Selector="Button.commit:pressed, Button.discard:pressed">
+            <Setter Property="RenderTransform" Value="scale(0.98)" />
+        </Style>
+
+        <Style Selector="Button.commit:disabled, Button.discard:disabled">
+            <Setter Property="Opacity" Value="0.35" />
+        </Style>
+
+        <Style Selector="Button.commit, Button.discard">
+            <Setter Property="Transitions">
+                <Transitions>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.12" />
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.12" />
+                </Transitions>
+            </Setter>
+        </Style>
+
+        <!-- Tool rail buttons: square, icon-ish, no chrome until hovered. -->
+        <Style Selector="Button.tool">
+            <Setter Property="Width" Value="44" />
+            <Setter Property="Height" Value="40" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0,0,0,6" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+
+        <!--
+            The quiet "add another element" buttons that sit under each face. Elements default to
+            markdown, so these are the whole element palette — there is no kind picker any more.
+        -->
+        <Style Selector="Button.addElement">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Padding" Value="8,3" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Opacity" Value="0.65" />
+        </Style>
+
+        <Style Selector="Button.addElement:pointerover">
+            <Setter Property="Opacity" Value="1" />
+        </Style>
+
+        <!-- The freeform tool bar: a nav strip across the top of the designer. -->
+        <Style Selector="Border.toolbar">
+            <Setter Property="Background" Value="{DynamicResource SemiColorBackground1}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SemiColorBorder}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Padding" Value="8,6" />
+        </Style>
+
+        <Style Selector="ToggleButton.tool">
+            <Setter Property="MinWidth" Value="66" />
+            <Setter Property="Padding" Value="10,5" />
+            <Setter Property="FontSize" Value="12" />
+        </Style>
+
+        <!-- The question/answer switch, drawn as one joined pill. -->
+        <Style Selector="ToggleButton.face">
+            <Setter Property="MinWidth" Value="104" />
+            <Setter Property="Padding" Value="12,6" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="CornerRadius" Value="0" />
+        </Style>
+
+        <Style Selector="ToggleButton.face:nth-child(1)">
+            <Setter Property="CornerRadius" Value="14,0,0,14" />
+        </Style>
+
+        <Style Selector="ToggleButton.face:nth-last-child(1)">
+            <Setter Property="CornerRadius" Value="0,14,14,0" />
+        </Style>
+
+        <!-- The card itself: a page floating on the workspace. -->
+        <Style Selector="Border.artboard">
+            <Setter Property="Background" Value="{DynamicResource SemiColorBackground1}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SemiColorBorder}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="ClipToBounds" Value="True" />
+        </Style>
+
+        <!-- An element placed on the canvas. -->
+        <Style Selector="Border.placed">
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="2" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="2" />
+        </Style>
+
+        <Style Selector="Border.placed:pointerover">
+            <Setter Property="BorderBrush" Value="{DynamicResource SemiColorBorder}" />
+        </Style>
+
+        <Style Selector="Border.placed.selected">
+            <Setter Property="BorderBrush" Value="{DynamicResource SemiColorPrimary}" />
+        </Style>
+
+        <!-- Top-left move grip. -->
+        <Style Selector="Border.movegrip">
+            <Setter Property="Width" Value="18" />
+            <Setter Property="Height" Value="18" />
+            <Setter Property="Margin" Value="-7,-7,0,0" />
+            <Setter Property="CornerRadius" Value="3" />
+            <Setter Property="Background" Value="{DynamicResource SemiColorPrimary}" />
+            <Setter Property="Cursor" Value="SizeAll" />
+        </Style>
+
+        <!-- Bottom-right resize grip. -->
+        <Style Selector="Border.grip">
+            <Setter Property="Width" Value="14" />
+            <Setter Property="Height" Value="14" />
+            <Setter Property="Margin" Value="0,0,-7,-7" />
+            <Setter Property="CornerRadius" Value="3" />
+            <Setter Property="Background" Value="{DynamicResource SemiColorPrimary}" />
+            <Setter Property="Cursor" Value="BottomRightCorner" />
+        </Style>
+
+        <!-- The little grab strip down the left of each element. -->
+        <Style Selector="Button.handle">
+            <Setter Property="Width" Value="22" />
+            <Setter Property="Height" Value="20" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="FontSize" Value="10" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+        </Style>
+
+        <Style Selector="TextBlock.faceLabel">
+            <Setter Property="FontSize" Value="10" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Opacity" Value="0.5" />
+            <Setter Property="Margin" Value="2,0,0,8" />
+        </Style>
+
+        <!-- Borderless text entry so the canvas reads as a document, not a form. -->
+        <Style Selector="TextBox.canvasText">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="8,6" />
+        </Style>
+
+    </UserControl.Styles>
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="avares://Flashcards.Desktop/Views/Design/DesignerResources.axaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Grid RowDefinitions="Auto,*,Auto"
+          Classes="designer"
+          Classes.creating="{Binding !IsEditing}"
+          Classes.editing="{Binding IsEditing}">
+
+        <!-- ============================ CHROME ============================ -->
+        <Border Grid.Row="0"
+                Background="{DynamicResource SemiColorBackground1}"
+                BorderBrush="{DynamicResource SemiColorBorder}"
+                BorderThickness="0,0,0,1"
+                Padding="20,12">
+            <!--
+                Two rows. The top one carries the three things that identify the card — its name,
+                which mode the designer is in, and what shape of card it is. Subjects moved to a row
+                of their own beneath: they were sharing the top row with everything else and had
+                nowhere near enough width for a box, two buttons and a strip of chips.
+            -->
+            <StackPanel Spacing="10">
+
+            <Grid ColumnDefinitions="260,16,*,16,190">
+
+                <StackPanel Grid.Column="0" Spacing="2">
+                    <TextBlock Text="CARD NAME" Classes="faceLabel" Margin="2,0,0,0" />
+                    <TextBox Text="{Binding Name, Mode=TwoWay}"
+                             FontSize="15" FontWeight="SemiBold"
+                             Watermark="Untitled card" />
+                </StackPanel>
+
+                <!--
+                    Which mode the designer is in, and the way out of one of them. Create is
+                    pressable and leaves edit mode; Edit is an indicator only, because editing is
+                    something you enter by picking a card on the manage panel, not by asking for it
+                    here.
+                -->
+                <Border Grid.Column="2" Classes="modePill">
+                    <StackPanel Orientation="Horizontal">
+                        <Button Classes="modeSegment createSide"
+                                Classes.active="{Binding !IsEditing}"
+                                AutomationProperties.Name="Create mode"
+                                ToolTip.Tip="Start a new card"
+                                Command="{Binding ExitEditCommand}">
+                            <TextBlock Text="Create" />
+                        </Button>
+                        <Button Classes="modeSegment editSide"
+                                Classes.active="{Binding IsEditing}"
+                                AutomationProperties.Name="Edit mode"
+                                ToolTip.Tip="Editing an existing card — open one from the manage panel"
+                                IsHitTestVisible="False">
+                            <TextBlock Text="Edit" />
+                        </Button>
+                    </StackPanel>
+                </Border>
+
+
+                <!--
+                    Card type as a drop-down rather than four toggles: it is a one-of-four choice
+                    that changes rarely, and laying every option out permanently cost more header
+                    width than the tags had.
+                -->
+                <StackPanel Grid.Column="4" Spacing="2">
+                    <TextBlock Text="CARD TYPE" Classes="faceLabel" Margin="2,0,0,0" />
+                    <ComboBox HorizontalAlignment="Stretch"
+                              ItemsSource="{Binding CardTypes}"
+                              SelectedItem="{Binding CardType, Mode=TwoWay}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate x:DataType="cards:CardType">
+                                <TextBlock Text="{Binding Converter={StaticResource CardTypeName}}" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </StackPanel>
+            </Grid>
+
+                <!--
+                    Subjects are tags: type anything and it is created on save, and a card may wear
+                    as many as it needs. The box is on the left so it stays put as chips accumulate
+                    — a trailing input would walk further right with every tag added.
+
+                    The chip strip scrolls sideways rather than wrapping, so the header keeps a
+                    fixed height however many tags a card carries, and every one stays reachable.
+                -->
+                <StackPanel Spacing="2">
+                    <TextBlock Text="SUBJECT TAGS" Classes="faceLabel" Margin="2,0,0,0" />
+
+                    <!--
+                        A fixed height for the whole row, so nothing in it moves when the first chip
+                        lands. Previously the chip strip grew past its minimum, the row grew with it,
+                        and the two buttons — which stretch — grew too while the text box, which
+                        centres, stayed its natural size and ended up visibly short of them.
+                        Pinning the row and stretching every child means there is no growth to be
+                        inconsistent about.
+                    -->
+                    <Grid ColumnDefinitions="Auto,8,*" Height="38">
+
+                        <!--
+                            Type to narrow, or open the list to browse. Two controls: the box, and
+                            one button that opens the create dialog. Where a new subject belongs is
+                            asked there, in front of the actual tree, rather than by a drop-down
+                            here that could only list parents as flat text.
+                        -->
+                        <Grid Grid.Column="0" ColumnDefinitions="150,Auto,Auto" ColumnSpacing="3">
+
+                            <TextBox x:Name="TagBox" Grid.Column="0"
+                                     VerticalAlignment="Stretch"
+                                     VerticalContentAlignment="Center"
+                                     Text="{Binding TagDraft, Mode=TwoWay}"
+                                     Watermark="subject…" />
+
+                            <!--
+                                The prediction list. A Popup driven by a bound flag rather than a
+                                Flyout, because it has to open by itself while typing continues and
+                                a Flyout takes focus when it shows — which would swallow the very
+                                next keystroke.
+
+                                Light dismiss is off for the same reason, and this was measured
+                                rather than assumed: with it on, the popup closed again the instant
+                                the timer opened it. Light dismiss expects the popup to hold focus,
+                                and this one deliberately never does. Dismissal is therefore handled
+                                by hand — see OnTagBoxLostFocus in the code-behind — and every
+                                control in and around the popup is Focusable="False" so that
+                                clicking one is not itself a blur that closes what you clicked.
+                            -->
+                            <ToggleButton Grid.Column="1" Padding="6,0" VerticalAlignment="Stretch"
+                                          x:Name="SuggestToggle"
+                                          Focusable="False"
+                                          AutomationProperties.Name="Browse subjects"
+                                          ToolTip.Tip="Pick an existing subject"
+                                          IsChecked="{Binding IsSuggestionsOpen, Mode=TwoWay}">
+                                <Path Data="{StaticResource IconChevronDown}"
+                                      Fill="{Binding $parent[ToggleButton].Foreground}"
+                                      Width="11" Height="11" Stretch="Uniform" Opacity="0.75" />
+                            </ToggleButton>
+
+                            <Popup PlacementTarget="{Binding #TagBox}"
+                                   Placement="BottomEdgeAlignedLeft"
+                                   IsLightDismissEnabled="False"
+                                   IsOpen="{Binding IsSuggestionsOpen, Mode=TwoWay}">
+                                <Border Background="{DynamicResource SemiColorBackground1}"
+                                        BorderBrush="{DynamicResource SemiColorBorder}"
+                                        BorderThickness="1" CornerRadius="8" Padding="10"
+                                        BoxShadow="0 8 24 0 #40000000">
+                                    <DockPanel Width="290" MaxHeight="320">
+                                        <TextBlock DockPanel.Dock="Top" Classes="muted" FontSize="11"
+                                                   Margin="2,0,0,6"
+                                                   Text="Existing subjects — indented by where they sit." />
+                                        <ScrollViewer>
+                                            <ItemsControl ItemsSource="{Binding TagMatches}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate x:DataType="contracts:SubjectSummary">
+                                                        <Button Classes="subjectOption"
+                                                                Command="{Binding $parent[UserControl].((vm:CardEditorViewModel)DataContext).PickTagCommand}"
+                                                                CommandParameter="{Binding}">
+                                                            <Grid ColumnDefinitions="Auto,8,*,8,Auto">
+                                                                <controls:Identicon Grid.Column="0"
+                                                                                    Width="20" Height="20"
+                                                                                    Variant="Subject"
+                                                                                    Margin="{Binding Depth, Converter={StaticResource DepthIndent}}"
+                                                                                    Seed="{Binding Id}"
+                                                                                    AccentHex="{Binding ColorHex}" />
+                                                                <TextBlock Grid.Column="2" Text="{Binding Name}"
+                                                                           VerticalAlignment="Center"
+                                                                           TextTrimming="CharacterEllipsis" />
+                                                                <TextBlock Grid.Column="4" Classes="muted"
+                                                                           VerticalAlignment="Center"
+                                                                           Text="{Binding TotalCardCount}" />
+                                                            </Grid>
+                                                        </Button>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </ScrollViewer>
+                                    </DockPanel>
+                                </Border>
+                            </Popup>
+
+                            <!--
+                                One button, an icon only. Creating a subject is now a dialog, so
+                                there is nothing left to configure out here.
+                            -->
+                            <Button Grid.Column="2" Padding="8,0" VerticalAlignment="Stretch"
+                                    AutomationProperties.Name="Create subject"
+                                    ToolTip.Tip="Create subject"
+                                    Command="{Binding CreateSubjectCommand}">
+                                <Path Data="{StaticResource IconPlus}"
+                                      Fill="{Binding $parent[Button].Foreground}"
+                                      Width="13" Height="13" Stretch="Uniform" />
+                            </Button>
+                        </Grid>
+
+                        <Border Grid.Column="2" Classes="tagStrip">
+                            <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                                          VerticalScrollBarVisibility="Disabled">
+                                <!--
+                                    Two strips in one line: the tags actually applied, then what
+                                    they drag in from above. The inherited ones are dimmed and carry
+                                    no remove button, because the way to get rid of one is to drop
+                                    the tag underneath it or move the subject — not to take it off
+                                    this card.
+                                -->
+                                <StackPanel Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
+                                    <ItemsControl ItemsSource="{Binding SubjectTags}" VerticalAlignment="Center">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <!-- Horizontal, not wrapping: the strip scrolls instead of growing taller. -->
+                                                <StackPanel Orientation="Horizontal" Spacing="5" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="subjvm:SubjectTagViewModel">
+                                                <subj:SubjectChip SubjectName="{Binding Name}"
+                                                                      ColorHex="{Binding ColorHex}"
+                                                                      ShowRemove="True"
+                                                                      RemoveCommand="{Binding $parent[UserControl].((vm:CardEditorViewModel)DataContext).RemoveTagCommand}"
+                                                                      RemoveCommandParameter="{Binding}" />
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+
+                                    <TextBlock Text="+" Opacity="0.35" VerticalAlignment="Center"
+                                               IsVisible="{Binding HasInheritedTags}" />
+
+                                    <ItemsControl ItemsSource="{Binding InheritedTags}" VerticalAlignment="Center"
+                                                  Opacity="0.55"
+                                                  ToolTip.Tip="Inherited from where these subjects sit in the tree">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel Orientation="Horizontal" Spacing="5" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="subjvm:SubjectTagViewModel">
+                                                <subj:SubjectChip SubjectName="{Binding Name}"
+                                                                      ColorHex="{Binding ColorHex}" />
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </Border>
+                    </Grid>
+
+                    <!-- Why the typed name cannot be created. Clears as soon as it is edited. -->
+                    <TextBlock Text="{Binding TagError}" FontSize="11" Margin="2,2,0,0"
+                               Foreground="{DynamicResource SemiColorDanger}"
+                               TextTrimming="CharacterEllipsis"
+                               IsVisible="{Binding TagError, Converter={StaticResource NotNull}}" />
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- ============================= BODY ============================= -->
+        <!--
+            Four boards, one per card type, each in its own file. Only one is ever visible: the
+            three stacked boards share a scrolling canvas, and the designed card gets its own
+            because it lays itself out rather than flowing.
+
+            Each board inherits this view's DataContext and its styles. Shared markup — the block
+            template the first three draw their elements with — cannot be inherited the same way and
+            lives in DesignerResources.axaml, which they merge; see the note in that file.
+        -->
+        <Grid Grid.Row="1">
+
+            <Border Classes="canvas" IsVisible="{Binding IsFlowLayout}">
+                <ScrollViewer Padding="30,24">
+                    <Panel MaxWidth="720" HorizontalAlignment="Stretch">
+                        <views:DesignerStandardBoard IsVisible="{Binding IsStandard}" />
+                        <views:DesignerChoiceBoard   IsVisible="{Binding IsMultipleChoice}" />
+                        <views:DesignerClozeBoard    IsVisible="{Binding IsCloze}" />
+                    </Panel>
+                </ScrollViewer>
+            </Border>
+
+            <!-- Named, because the pointer handler below hands presses to it. -->
+            <Border Classes="canvas" IsVisible="{Binding IsFreeform}">
+                <views:DesignerFreeformBoard x:Name="FreeformBoard" />
+            </Border>
+
+        </Grid>
+
+        <!-- ============================ FOOTER ============================ -->
+        <Border Grid.Row="2"
+                Background="{DynamicResource SemiColorBackground1}"
+                BorderBrush="{DynamicResource SemiColorBorder}"
+                BorderThickness="0,1,0,0"
+                Padding="20,12">
+            <!--
+                Left to right: throw away, what happened, commit. The same arrangement as the study
+                session's grading bar and the manage panel's pager, so the side a control sits on
+                is itself a statement about which way it takes you.
+            -->
+            <Grid ColumnDefinitions="Auto,18,*,18,Auto">
+
+                <!-- Discard is a bin icon: reachable and unmistakable, not prominent. -->
+                <Button Grid.Column="0" Classes="discard"
+                        AutomationProperties.Name="Discard draft"
+                        ToolTip.Tip="Discard this draft and start over"
+                        IsEnabled="{Binding HasDraftContent}"
+                        Command="{Binding ResetCommand}">
+                    <Path Data="{StaticResource IconDelete}"
+                          Fill="{Binding $parent[Button].Foreground}"
+                          Width="16" Height="16" Stretch="Uniform" />
+                </Button>
+
+                <StackPanel Grid.Column="2" VerticalAlignment="Center" Spacing="2">
+                    <TextBlock Text="{Binding ErrorMessage}"
+                               Foreground="{DynamicResource SemiColorDanger}"
+                               TextWrapping="Wrap"
+                               HorizontalAlignment="Center" TextAlignment="Center"
+                               IsVisible="{Binding ErrorMessage, Converter={StaticResource NotNull}}" />
+                    <TextBlock Text="{Binding StatusMessage}"
+                               Classes="muted"
+                               TextWrapping="Wrap"
+                               HorizontalAlignment="Center" TextAlignment="Center"
+                               IsVisible="{Binding StatusMessage, Converter={StaticResource NotNull}}" />
+                </StackPanel>
+
+                <!-- Create is the point of the screen, so it is the wide, coloured one. -->
+                <Button Grid.Column="4" Classes="commit" Command="{Binding SaveCommand}">
+                    <TextBlock Text="{Binding SaveLabel}" />
+                </Button>
+
+            </Grid>
+        </Border>
+
+    </Grid>
+</UserControl>

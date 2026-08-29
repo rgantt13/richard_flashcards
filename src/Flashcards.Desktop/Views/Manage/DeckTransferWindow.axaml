@@ -1,0 +1,242 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ctrl="clr-namespace:Flashcards.Desktop.Controls.Shared"
+        xmlns:subj="clr-namespace:Flashcards.Desktop.Controls.Subjects"
+        xmlns:vm="clr-namespace:Flashcards.Desktop.ViewModels.Manage"
+        xmlns:transfer="clr-namespace:Flashcards.Application.Transfer;assembly=Flashcards.Application"
+        x:Class="Flashcards.Desktop.Views.Manage.DeckTransferWindow"
+        x:DataType="vm:DeckTransferViewModel"
+        Title="{Binding Title}"
+        Width="880" Height="640"
+        MinWidth="640" MinHeight="480"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False">
+
+    <!--
+        Picking what travels, in the same two tiers the Study panel uses to assemble a custom
+        session: subjects on the left, the cards they hold on the right, ticking a subject deciding
+        what the card column offers.
+
+        One window serves both directions. Export and import ask the identical question — which of
+        these subjects and which of these cards — and the only thing that differs is where the rows
+        came from and the conflict setting at the foot, which only import shows.
+    -->
+
+    <Window.Styles>
+        <Style Selector="TextBlock.tierLabel">
+            <Setter Property="FontSize" Value="10" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Opacity" Value="0.5" />
+        </Style>
+
+        <!-- All/None over a column. Housekeeping, so deliberately small. -->
+        <Style Selector="Button.mini">
+            <Setter Property="Padding" Value="8,3" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="MinWidth" Value="0" />
+        </Style>
+
+        <!-- "already here" — quiet, and the same shape on both kinds of row. -->
+        <Style Selector="Border.note">
+            <Setter Property="Background" Value="{DynamicResource SemiColorFill1}" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Padding" Value="5,1" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <Style Selector="Border.note > TextBlock">
+            <Setter Property="FontSize" Value="10" />
+            <Setter Property="Opacity" Value="0.7" />
+        </Style>
+    </Window.Styles>
+
+    <DockPanel Margin="20">
+
+        <StackPanel DockPanel.Dock="Top" Spacing="4" Margin="0,0,0,14">
+            <TextBlock Text="{Binding Title}" FontSize="17" FontWeight="SemiBold" />
+            <TextBlock Text="{Binding Intro}" Classes="muted" TextWrapping="Wrap" />
+            <TextBlock Classes="muted" FontSize="11" TextTrimming="CharacterEllipsis"
+                       IsVisible="{Binding SourceName, Converter={StaticResource NotNull}}"
+                       Text="{Binding SourceName, StringFormat='{}Reading {0}'}" />
+        </StackPanel>
+
+        <!--
+            Back on the left, forward on the right, what is about to happen between them — the
+            arrangement the designer's footer and the study session's grading bar already use.
+        -->
+        <Grid DockPanel.Dock="Bottom" ColumnDefinitions="Auto,16,*,16,Auto" Margin="0,16,0,0">
+            <Button Grid.Column="0" Content="Cancel" MinWidth="92"
+                    HorizontalContentAlignment="Center"
+                    Command="{Binding CancelCommand}" />
+
+            <StackPanel Grid.Column="2" VerticalAlignment="Center" Spacing="2">
+                <TextBlock HorizontalAlignment="Center" TextAlignment="Center"
+                           Text="{Binding CardSummary, StringFormat='{}{0} selected'}" />
+                <TextBlock Classes="muted" FontSize="11"
+                           HorizontalAlignment="Center" TextAlignment="Center"
+                           Text="{Binding SubjectSummary, StringFormat='{}from {0}'}" />
+            </StackPanel>
+
+            <Button Grid.Column="4" Classes="Primary" MinWidth="110"
+                    Content="{Binding ConfirmText}"
+                    HorizontalContentAlignment="Center"
+                    IsDefault="True"
+                    IsEnabled="{Binding CanConfirm}"
+                    Command="{Binding ConfirmCommand}" />
+        </Grid>
+
+        <!-- Import only: what happens to a card the library already has. -->
+        <Border DockPanel.Dock="Bottom" Classes="card" Padding="14,10" Margin="0,14,0,0"
+                IsVisible="{Binding IsImport}">
+            <StackPanel Spacing="6">
+                <TextBlock Text="IF A CARD IS ALREADY HERE" Classes="tierLabel" />
+
+                <StackPanel Orientation="Horizontal" Spacing="18">
+                    <RadioButton GroupName="conflict" Content="Skip it"
+                                 IsChecked="{Binding Mode, Mode=TwoWay,
+                                             Converter={StaticResource EnumToBool},
+                                             ConverterParameter={x:Static transfer:DeckImportMode.Skip}}" />
+                    <RadioButton GroupName="conflict" Content="Replace it"
+                                 IsChecked="{Binding Mode, Mode=TwoWay,
+                                             Converter={StaticResource EnumToBool},
+                                             ConverterParameter={x:Static transfer:DeckImportMode.Replace}}" />
+                </StackPanel>
+
+                <TextBlock Text="{Binding ModeExplanation}" Classes="muted" FontSize="11" TextWrapping="Wrap" />
+            </StackPanel>
+        </Border>
+
+        <Grid ColumnDefinitions="*,14,*">
+
+            <!-- ··· tier 1: subjects ··· -->
+            <Border Grid.Column="0" Classes="card" Padding="14,12">
+                <DockPanel>
+                    <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="0,0,0,8">
+                        <StackPanel Grid.Column="0" Spacing="1">
+                            <TextBlock Text="SUBJECTS" Classes="tierLabel" />
+                            <TextBlock Classes="muted" FontSize="11" Text="{Binding SubjectSummary}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                            <Button Classes="mini" Content="All" Command="{Binding SetAllSubjectsCommand}" CommandParameter="true" />
+                            <Button Classes="mini" Content="None" Command="{Binding SetAllSubjectsCommand}" CommandParameter="false" />
+                        </StackPanel>
+                    </Grid>
+
+                    <TextBlock DockPanel.Dock="Top" Classes="muted" TextWrapping="Wrap"
+                               Text="There are no subjects to choose from."
+                               IsVisible="{Binding SubjectPicks.Count, Converter={StaticResource AnyItems}, ConverterParameter=invert}" />
+
+                    <ListBox ItemsSource="{Binding SubjectPicks}"
+                             Background="Transparent" BorderThickness="0" Padding="0">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="vm:TransferSubjectViewModel">
+                                <!--
+                                    Indent is a margin on the identicon rather than padding in the
+                                    name, so the checkbox column stays a straight edge to aim at
+                                    however deep the row sits.
+                                -->
+                                <Grid ColumnDefinitions="Auto,8,Auto,10,*,8,Auto" Margin="0,2">
+                                    <CheckBox Grid.Column="0" VerticalAlignment="Center"
+                                              IsChecked="{Binding IsIncluded, Mode=TwoWay}" />
+
+                                    <ctrl:Identicon Grid.Column="2" Variant="Subject"
+                                                    Width="22" Height="22"
+                                                    VerticalAlignment="Center"
+                                                    Margin="{Binding Indent}"
+                                                    Seed="{Binding Seed}"
+                                                    AccentHex="{Binding ColorHex}" />
+
+                                    <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Name}" FontSize="12"
+                                                   VerticalAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis" />
+
+                                        <Border Classes="note" IsVisible="{Binding HasNote}">
+                                            <TextBlock Text="{Binding Note}" />
+                                        </Border>
+                                    </StackPanel>
+
+                                    <TextBlock Grid.Column="6" FontSize="11" Opacity="0.6"
+                                               VerticalAlignment="Center"
+                                               ToolTip.Tip="Cards this subject accounts for"
+                                               Text="{Binding CardCount}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
+            </Border>
+
+            <!-- ··· tier 2: the cards in them ··· -->
+            <Border Grid.Column="2" Classes="card" Padding="14,12">
+                <DockPanel>
+                    <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="0,0,0,8">
+                        <StackPanel Grid.Column="0" Spacing="1">
+                            <TextBlock Text="CARDS" Classes="tierLabel" />
+                            <TextBlock Classes="muted" FontSize="11" TextTrimming="CharacterEllipsis"
+                                       Text="{Binding CardSummary, StringFormat='{}{0} — none ticked means all'}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                            <Button Classes="mini" Content="All" Command="{Binding SetAllCardsCommand}" CommandParameter="true" />
+                            <Button Classes="mini" Content="None" Command="{Binding SetAllCardsCommand}" CommandParameter="false" />
+                        </StackPanel>
+                    </Grid>
+
+                    <TextBlock DockPanel.Dock="Top" Classes="muted" TextWrapping="Wrap"
+                               Text="Tick a subject on the left to choose cards from it."
+                               IsVisible="{Binding CardPicks.Count, Converter={StaticResource AnyItems}, ConverterParameter=invert}" />
+
+                    <ListBox ItemsSource="{Binding CardPicks}"
+                             Background="Transparent" BorderThickness="0" Padding="0">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="vm:TransferCardViewModel">
+                                <Grid ColumnDefinitions="Auto,8,Auto,10,*,8,Auto" Margin="0,2">
+                                    <CheckBox Grid.Column="0" VerticalAlignment="Center"
+                                              IsChecked="{Binding IsIncluded, Mode=TwoWay}" />
+
+                                    <ctrl:Identicon Grid.Column="2" Variant="Card"
+                                                    Width="22" Height="22"
+                                                    VerticalAlignment="Center"
+                                                    Seed="{Binding Id}" />
+
+                                    <StackPanel Grid.Column="4" Spacing="3" VerticalAlignment="Center">
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <TextBlock Text="{Binding Name}" FontSize="12"
+                                                       VerticalAlignment="Center"
+                                                       TextTrimming="CharacterEllipsis" />
+
+                                            <Border Classes="note" IsVisible="{Binding HasNote}">
+                                                <TextBlock Text="{Binding Note}" />
+                                            </Border>
+                                        </StackPanel>
+
+                                        <ItemsControl ItemsSource="{Binding Tags}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <WrapPanel />
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate x:DataType="vm:TransferTag">
+                                                    <subj:SubjectChip Margin="0,1,4,1"
+                                                                      SubjectName="{Binding Name}"
+                                                                      ColorHex="{Binding ColorHex}" />
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+
+                                    <TextBlock Grid.Column="6" FontSize="11" Opacity="0.5"
+                                               VerticalAlignment="Center"
+                                               Text="{Binding CardType, Converter={StaticResource CardTypeGlyph}}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
+            </Border>
+        </Grid>
+    </DockPanel>
+</Window>

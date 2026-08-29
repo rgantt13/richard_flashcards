@@ -1,0 +1,27 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:Flashcards.Desktop.ViewModels.Study"
+             xmlns:views="clr-namespace:Flashcards.Desktop.Views.Study"
+             xmlns:setup="clr-namespace:Flashcards.Desktop.Views.StudySetup"
+             x:Class="Flashcards.Desktop.Views.Study.QuizView"
+             x:DataType="vm:QuizViewModel"
+             x:Name="Root">
+
+    <!--
+        The Study panel, which is three screens rather than one.
+
+        This file is only the switchboard: each stage lives in its own view, and the one on show is
+        chosen by the view model's stage flags. They are stacked in a Grid rather than swapped into
+        a ContentControl because exactly one is ever visible, and stacking keeps the choice
+        declarative — you can read which screen appears when without following any code.
+
+        All three bind to the same QuizViewModel and inherit it as their DataContext, which is why
+        each declares x:DataType="vm:QuizViewModel" of its own: compiled bindings are checked
+        against the type a file *declares*, not the one it happens to receive at runtime.
+    -->
+    <Grid>
+        <setup:QuizSetupView    IsVisible="{Binding IsSetup}" />
+        <views:QuizSessionView  IsVisible="{Binding IsStudying}" />
+        <views:QuizFinishedView IsVisible="{Binding IsFinished}" />
+    </Grid>
+</UserControl>

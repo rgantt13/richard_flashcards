@@ -1,0 +1,227 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:Flashcards.Desktop.ViewModels.Study"
+             xmlns:shared="clr-namespace:Flashcards.Desktop.ViewModels.Shared"
+             xmlns:contracts="clr-namespace:Flashcards.Application.Contracts;assembly=Flashcards.Application"
+             xmlns:ctrl="clr-namespace:Flashcards.Desktop.Controls.Shared"
+             xmlns:subj="clr-namespace:Flashcards.Desktop.Controls.Subjects"
+             x:DataType="vm:QuizViewModel"
+             x:Class="Flashcards.Desktop.Views.Study.QuizSessionView">
+
+    <!--
+        Working through the queue. Shown by QuizView while a session is running.
+
+        The card fills the middle; the grading bar is pinned to the bottom and reads left to right
+        as back / what happened / forward. Keyboard shortcuts are handled by QuizView rather than
+        here, because QuizView is the focusable container the keys actually arrive at.
+    -->
+
+    <DockPanel Margin="28,20">
+
+        <!-- header -->
+        <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="0,0,0,14">
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12">
+                <ItemsControl ItemsSource="{Binding Current.Subjects}" VerticalAlignment="Center">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" Spacing="4" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="contracts:SubjectRef">
+                            <subj:SubjectChip SubjectName="{Binding Name}" ColorHex="{Binding ColorHex}" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <TextBlock Text="{Binding Current.Name}" FontWeight="SemiBold" VerticalAlignment="Center" />
+            </StackPanel>
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="16">
+                <TextBlock Text="{Binding ProgressLabel}" Classes="muted" VerticalAlignment="Center" />
+                <TextBlock Text="{Binding AccuracyLabel}" Classes="muted" VerticalAlignment="Center" />
+                <Button Content="End session" Command="{Binding EndSessionCommand}" />
+            </StackPanel>
+        </Grid>
+
+        <!--
+            ····· grading bar ·····
+
+            Laid out left / centre / right on purpose, and the same way on every panel: going
+            back sits on the left, what happened sits in the middle, and what moves you on sits
+            on the right. Reading the row tells you which direction each control takes you
+            without reading the labels.
+        -->
+        <Border DockPanel.Dock="Bottom" Padding="0,16,0,0">
+            <Grid ColumnDefinitions="Auto,16,*,16,Auto" VerticalAlignment="Center">
+
+                <!--
+                    Back: only while there is a question that was swapped away. It is the same
+                    control in both directions, so the arrow turns round with the label rather
+                    than the button moving to the other side of the bar — its side is what says
+                    "this is the way you came in".
+                -->
+                <Button Grid.Column="0" Padding="14,10"
+                        AutomationProperties.Name="Back"
+                        IsVisible="{Binding CanReviewQuestion}"
+                        Command="{Binding ToggleQuestionReviewCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <Path Data="{Binding IsReviewingQuestion, Converter={StaticResource ReviewToggleIcon}}"
+                              Fill="{Binding $parent[Button].Foreground}"
+                              Width="13" Height="13" Stretch="Uniform"
+                              VerticalAlignment="Center" />
+                        <TextBlock VerticalAlignment="Center"
+                                   Text="{Binding IsReviewingQuestion, Converter={StaticResource ReviewToggleLabel}}" />
+                    </StackPanel>
+                </Button>
+
+                <!-- what just happened -->
+                <StackPanel Grid.Column="2" Spacing="2" VerticalAlignment="Center">
+                    <TextBlock Classes="muted" HorizontalAlignment="Center" TextAlignment="Center"
+                               IsVisible="{Binding !IsAnswerVisible}"
+                               Text="Space to reveal" />
+
+                    <TextBlock Classes="muted" HorizontalAlignment="Center" TextAlignment="Center"
+                               IsVisible="{Binding LastAnswerCorrect, Converter={StaticResource NotNull}}"
+                               Text="Your selection was scored above — confirm how you did." />
+
+                    <TextBlock Classes="muted" HorizontalAlignment="Center" TextAlignment="Center"
+                               TextWrapping="Wrap"
+                               IsVisible="{Binding StatusMessage, Converter={StaticResource NotNull}}"
+                               Text="{Binding StatusMessage}" />
+
+                    <TextBlock HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"
+                               Foreground="{DynamicResource SemiColorDanger}"
+                               IsVisible="{Binding ErrorMessage, Converter={StaticResource NotNull}}"
+                               Text="{Binding ErrorMessage}" />
+                </StackPanel>
+
+                <!-- forward -->
+                <Button Grid.Column="4" Content="Show answer" Classes="Primary"
+                        Padding="24,10" FontSize="15"
+                        IsVisible="{Binding !IsAnswerVisible}"
+                        Command="{Binding RevealCommand}" />
+
+                <!--
+                    Two outcomes, not four. The old Again/Hard/Good/Easy scale existed to feed
+                    the interval calculation; with nothing being scheduled, the only question
+                    left is whether you got it. Both advance, so both sit on the right.
+
+                    The shortcut hints sit under the buttons rather than inside them: in the
+                    button they competed with the word that says what the button does, and made
+                    each one two lines tall to carry text nobody reads twice.
+                -->
+                <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="10"
+                            IsVisible="{Binding IsAnswerVisible}">
+
+                    <StackPanel Spacing="4">
+                        <Button Width="150" Height="44" HorizontalContentAlignment="Center"
+                                Classes="Danger"
+                                AutomationProperties.Name="Wrong"
+                                Command="{Binding AnswerCommand}" CommandParameter="false">
+                            <StackPanel Orientation="Horizontal" Spacing="7">
+                                <Path Data="{StaticResource IconClose}"
+                                      Fill="{Binding $parent[Button].Foreground}"
+                                      Width="13" Height="13" Stretch="Uniform"
+                                      VerticalAlignment="Center" />
+                                <TextBlock Text="Wrong" FontWeight="SemiBold" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                        <TextBlock Text="1 / Ctrl" FontSize="11" Opacity="0.55" HorizontalAlignment="Center" />
+                    </StackPanel>
+
+                    <StackPanel Spacing="4">
+                        <Button Width="150" Height="44" HorizontalContentAlignment="Center"
+                                Classes="Success"
+                                AutomationProperties.Name="Correct"
+                                Command="{Binding AnswerCommand}" CommandParameter="true">
+                            <StackPanel Orientation="Horizontal" Spacing="7">
+                                <Path Data="{StaticResource IconCheck}"
+                                      Fill="{Binding $parent[Button].Foreground}"
+                                      Width="13" Height="13" Stretch="Uniform"
+                                      VerticalAlignment="Center" />
+                                <TextBlock Text="Correct" FontWeight="SemiBold" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                        <TextBlock Text="2 / Space" FontSize="11" Opacity="0.55" HorizontalAlignment="Center" />
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- the card itself -->
+        <ScrollViewer>
+            <StackPanel Spacing="18" MaxWidth="960" HorizontalAlignment="Stretch">
+
+                <!--
+                    The question. Revealing replaces it with the answer rather than pushing the
+                    answer on underneath, so the answer is where your eyes already are instead
+                    of below the fold. Cloze and multiple-choice cards are the exception — they
+                    reveal in place, so their question stays put; see SwapsOnReveal.
+                -->
+                <Border Classes="card" Padding="26" IsVisible="{Binding ShowsQuestion}">
+                    <ctrl:RichContentPresenter Blocks="{Binding Current.QuestionBlocks}"
+                                               HideClozeAnswers="{Binding HideClozeAnswers}"
+                                               ContentFontSize="17" />
+                </Border>
+
+                <!-- multiple choice -->
+                <ItemsControl ItemsSource="{Binding CurrentChoices}" IsVisible="{Binding IsMultipleChoice}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="shared:ChoiceEditorViewModel">
+                            <Button Margin="0,0,0,8"
+                                    Padding="14,12"
+                                    HorizontalAlignment="Stretch"
+                                    HorizontalContentAlignment="Left"
+                                    Command="{Binding $parent[UserControl].((vm:QuizViewModel)DataContext).ToggleChoiceCommand}"
+                                    CommandParameter="{Binding}">
+                                <Grid ColumnDefinitions="Auto,12,*,Auto">
+                                    <Border Grid.Column="0" Width="18" Height="18" CornerRadius="9"
+                                            BorderThickness="2"
+                                            BorderBrush="{DynamicResource SemiColorBorder}"
+                                            Background="{Binding IsSelected, Converter={StaticResource SelectionBrush}}" />
+                                    <TextBlock Grid.Column="2" Text="{Binding Text}" TextWrapping="Wrap" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="3" Text="correct" FontSize="11" VerticalAlignment="Center"
+                                               Foreground="{DynamicResource SemiColorSuccess}"
+                                               IsVisible="{Binding IsCorrect}" />
+                                </Grid>
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <!-- answer -->
+                <StackPanel Spacing="14" IsVisible="{Binding ShowsAnswer}">
+                    <!-- Only a rule when there is something above it to be ruled off from. -->
+                    <Border Height="1" Background="{DynamicResource SemiColorBorder}"
+                            IsVisible="{Binding ShowsQuestion}" />
+
+                    <Border Classes="card" Padding="26">
+                        <ctrl:RichContentPresenter Blocks="{Binding Current.AnswerBlocks}"
+                                                   HideClozeAnswers="False"
+                                                   ContentFontSize="16" />
+                    </Border>
+
+                    <Border Classes="card" Padding="18"
+                            IsVisible="{Binding Current.Notes, Converter={StaticResource NotNull}}">
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="NOTES" FontSize="10" FontWeight="Bold" Opacity="0.45" />
+                            <TextBlock Text="{Binding Current.Notes}" TextWrapping="Wrap" Opacity="0.85" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- This card's lifetime record, rather than its schedule. -->
+                    <StackPanel Orientation="Horizontal" Spacing="20" Opacity="0.55"
+                                IsVisible="{Binding CurrentCardStats.Practice.HasHistory}">
+                        <TextBlock FontSize="11" Text="{Binding CurrentCardStats.Practice.Answered, StringFormat='{}answered {0}×'}" />
+                        <TextBlock FontSize="11" Text="{Binding CurrentCardStats.Practice.Correct, StringFormat='{}right {0}'}" />
+                        <TextBlock FontSize="11" Text="{Binding CurrentCardStats.Practice.Wrong, StringFormat='{}wrong {0}'}" />
+                        <TextBlock FontSize="11" Text="{Binding CurrentCardStats.Practice.Accuracy, StringFormat='{}{0:P0} correct'}" />
+                    </StackPanel>
+
+                    <TextBlock FontSize="11" Opacity="0.55" Text="First time seeing this card."
+                               IsVisible="{Binding CurrentCardStats.Practice.HasHistory, Converter={StaticResource NotNull}, ConverterParameter=invert}" />
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+</UserControl>

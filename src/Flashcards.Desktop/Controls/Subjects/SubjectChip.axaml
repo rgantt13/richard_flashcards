@@ -1,0 +1,107 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:controls="clr-namespace:Flashcards.Desktop.Controls.Subjects"
+                    xmlns:conv="clr-namespace:Flashcards.Desktop.Converters">
+
+    <!--
+        The look of SubjectChip.
+
+        Converters are declared locally rather than pulled from App.axaml so the dictionary is
+        self-contained: this file can be merged in any order without depending on what App has
+        already defined.
+    -->
+    <conv:ColorHexToBrushConverter x:Key="ChipSolid" />
+    <conv:ColorHexToTintBrushConverter x:Key="ChipTint" />
+
+    <ControlTheme x:Key="{x:Type controls:SubjectChip}" TargetType="controls:SubjectChip">
+
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="HorizontalAlignment" Value="Left" />
+        <Setter Property="FontSize" Value="11.5" />
+
+        <Setter Property="Template">
+            <ControlTemplate>
+                <!--
+                    Tinted fill plus a slightly stronger tinted edge. Both derive from the subject's
+                    own colour, while the label keeps the theme foreground — that is what keeps the
+                    chip legible in light and dark without a second palette.
+                -->
+                <Border x:Name="PART_Root"
+                        CornerRadius="11"
+                        Padding="8,3,9,3"
+                        BorderThickness="1"
+                        Background="{Binding ColorHex, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource ChipTint}, ConverterParameter=0.16}"
+                        BorderBrush="{Binding ColorHex, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource ChipTint}, ConverterParameter=0.42}">
+
+                    <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+
+                        <!-- Identity dot: the one place the colour appears at full strength. -->
+                        <Ellipse Width="7" Height="7"
+                                 VerticalAlignment="Center"
+                                 Fill="{Binding ColorHex, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource ChipSolid}}" />
+
+                        <TextBlock Text="{Binding SubjectName, RelativeSource={RelativeSource TemplatedParent}}"
+                                   FontSize="{TemplateBinding FontSize}"
+                                   VerticalAlignment="Center"
+                                   TextTrimming="CharacterEllipsis" />
+
+                        <!-- Trailing count, the way a filter chip shows how many things it matches. -->
+                        <Border CornerRadius="7"
+                                Padding="5,0"
+                                MinWidth="18"
+                                VerticalAlignment="Center"
+                                Background="{Binding ColorHex, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource ChipTint}, ConverterParameter=0.3}"
+                                IsVisible="{Binding ShowCount, RelativeSource={RelativeSource TemplatedParent}}">
+                            <TextBlock Text="{Binding Count, RelativeSource={RelativeSource TemplatedParent}}"
+                                       FontSize="10"
+                                       Opacity="0.85"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center" />
+                        </Border>
+
+                        <!-- Remove affordance. Focusable=False so dismissing a tag never steals
+                             focus from the box the user is typing the next one into. -->
+                        <Button x:Name="PART_Remove"
+                                Content="✕"
+                                FontSize="9"
+                                Width="16" Height="16"
+                                Padding="0"
+                                Focusable="False"
+                                Background="Transparent"
+                                VerticalAlignment="Center"
+                                HorizontalContentAlignment="Center"
+                                ToolTip.Tip="Remove this tag"
+                                IsVisible="{Binding ShowRemove, RelativeSource={RelativeSource TemplatedParent}}"
+                                Command="{Binding RemoveCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                                CommandParameter="{Binding RemoveCommandParameter, RelativeSource={RelativeSource TemplatedParent}}" />
+
+                    </StackPanel>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+
+        <!--
+            Variants, selected the way you would add a class in CSS:
+            <controls:SubjectChip Classes="large" /> or Classes="ghost".
+        -->
+        <Style Selector="^.large">
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+
+        <Style Selector="^.large /template/ Border#PART_Root">
+            <Setter Property="CornerRadius" Value="13" />
+            <Setter Property="Padding" Value="10,5,12,5" />
+        </Style>
+
+        <!-- Quieter version for dense lists, where a row of filled chips would be noisy. -->
+        <Style Selector="^.ghost /template/ Border#PART_Root">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+
+        <Style Selector="^:disabled">
+            <Setter Property="Opacity" Value="0.5" />
+        </Style>
+
+    </ControlTheme>
+
+</ResourceDictionary>

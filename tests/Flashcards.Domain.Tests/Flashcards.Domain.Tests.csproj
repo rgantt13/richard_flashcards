@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Flashcards.Domain\Flashcards.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="Shouldly" />
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <!--
+      Implicit global using for the whole project. xunit v2 ships no global usings of its own and
+      <ImplicitUsings> does not cover it, so without this every test file needs `using Xunit;`.
+    -->
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+</Project>

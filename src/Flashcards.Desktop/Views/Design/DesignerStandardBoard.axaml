@@ -1,0 +1,61 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:Flashcards.Desktop.ViewModels.Design"
+             xmlns:shared="clr-namespace:Flashcards.Desktop.ViewModels.Shared"
+             xmlns:subjvm="clr-namespace:Flashcards.Desktop.ViewModels.Subjects"
+             xmlns:controls="clr-namespace:Flashcards.Desktop.Controls.Shared"
+             xmlns:subj="clr-namespace:Flashcards.Desktop.Controls.Subjects"
+             xmlns:contracts="clr-namespace:Flashcards.Application.Contracts;assembly=Flashcards.Application"
+             xmlns:cards="clr-namespace:Flashcards.Domain.Cards;assembly=Flashcards.Domain"
+             x:DataType="vm:CardEditorViewModel"
+             x:Class="Flashcards.Desktop.Views.Design.DesignerStandardBoard">
+
+    <!--
+        A plain question-and-answer card: a stack of blocks per face, each face on its own sheet.
+
+        Shown by CardEditorView when the card type matches. Its DataContext is the same
+        CardEditorViewModel, and the styles it draws with (sheet, element, faceLabel, addElement)
+        are declared on CardEditorView and reach it by being an ancestor.
+    -->
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="avares://Flashcards.Desktop/Views/Design/DesignerResources.axaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+        <StackPanel IsVisible="{Binding IsStandard}">
+
+            <Border Classes="sheet">
+                <StackPanel>
+                    <TextBlock Text="QUESTION" Classes="faceLabel" />
+                    <ItemsControl ItemsSource="{Binding QuestionBlocks}"
+                                  ItemTemplate="{StaticResource ElementTemplate}" />
+                    <StackPanel Orientation="Horizontal" Spacing="4" Margin="24,4,0,0">
+                        <Button Classes="addElement" Content="+ text"
+                                Command="{Binding AddBlockCommand}" CommandParameter="Question:Markdown" />
+                        <Button Classes="addElement" Content="+ image"
+                                Command="{Binding AddBlockCommand}" CommandParameter="Question:Image" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <Border Classes="sheet">
+                <StackPanel>
+                    <TextBlock Text="ANSWER" Classes="faceLabel" />
+                    <ItemsControl ItemsSource="{Binding AnswerBlocks}"
+                                  ItemTemplate="{StaticResource ElementTemplate}" />
+                    <StackPanel Orientation="Horizontal" Spacing="4" Margin="24,4,0,0">
+                        <Button Classes="addElement" Content="+ text"
+                                Command="{Binding AddBlockCommand}" CommandParameter="Answer:Markdown" />
+                        <Button Classes="addElement" Content="+ image"
+                                Command="{Binding AddBlockCommand}" CommandParameter="Answer:Image" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+
+</UserControl>

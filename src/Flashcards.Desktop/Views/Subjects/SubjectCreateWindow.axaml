@@ -1,0 +1,61 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:Flashcards.Desktop.Controls.Subjects"
+        xmlns:vm="clr-namespace:Flashcards.Desktop.ViewModels.Subjects"
+        x:Class="Flashcards.Desktop.Views.Subjects.SubjectCreateWindow"
+        x:DataType="vm:SubjectCreateViewModel"
+        Title="New subject"
+        Width="460" Height="560"
+        MinWidth="380" MinHeight="420"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False">
+
+    <!--
+        Name at the top, the tree beneath it, the commit at the bottom right. The tree is the point:
+        it shows the subject you are about to create sitting where it will sit, among the ones that
+        already exist, and you move it by dragging it there rather than by naming a parent.
+    -->
+    <DockPanel Margin="20">
+
+        <StackPanel DockPanel.Dock="Top" Spacing="8">
+            <TextBlock Text="New subject" FontSize="17" FontWeight="SemiBold" />
+
+            <TextBox x:Name="NameBox"
+                     Text="{Binding Name, Mode=TwoWay}"
+                     Watermark="Subject name"
+                     FontSize="14" />
+
+            <TextBlock Text="{Binding Error}" FontSize="12" TextWrapping="Wrap"
+                       Foreground="{DynamicResource SemiColorDanger}"
+                       IsVisible="{Binding Error, Converter={StaticResource NotNull}}" />
+        </StackPanel>
+
+        <!-- commit, bottom right -->
+        <Grid DockPanel.Dock="Bottom" ColumnDefinitions="*,Auto,8,Auto" Margin="0,14,0,0">
+            <TextBlock Grid.Column="0" Classes="muted" VerticalAlignment="Center"
+                       TextTrimming="CharacterEllipsis"
+                       Text="{Binding PlacementLabel}" />
+
+            <Button Grid.Column="1" Content="Cancel" MinWidth="88"
+                    HorizontalContentAlignment="Center"
+                    Command="{Binding CancelCommand}" />
+
+            <Button Grid.Column="3" Classes="Primary" Content="Create" MinWidth="104"
+                    HorizontalContentAlignment="Center"
+                    IsDefault="True"
+                    IsEnabled="{Binding !IsBusy}"
+                    Command="{Binding CreateCommand}" />
+        </Grid>
+
+        <StackPanel DockPanel.Dock="Top" Spacing="2" Margin="0,14,0,6">
+            <TextBlock Text="WHERE IT GOES" FontSize="10" FontWeight="Bold" Opacity="0.5" />
+            <TextBlock Classes="muted" FontSize="11" TextWrapping="Wrap"
+                       Text="Drag the outlined row onto a subject to file it inside, or onto the empty space below to keep it at the top level." />
+        </StackPanel>
+
+        <Border Classes="card" Padding="10,8">
+            <controls:SubjectTreeView ItemsSource="{Binding Nodes}"
+                                      MoveCommand="{Binding MoveCommand}" />
+        </Border>
+    </DockPanel>
+</Window>

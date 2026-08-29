@@ -1,0 +1,32 @@
+<Project>
+
+  <!-- Applies to every project in the repo. One place to change the TFM. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>preview</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
+    <!--
+      Deliberately false. Globalization-invariant mode trims ICU out of the app, which is a sensible
+      trade in a container but wrong on the desktop: any attempt to construct a non-invariant
+      CultureInfo throws CultureNotFoundException ("Only the invariant culture is supported..."),
+      and it silently degrades date, number and case-insensitive string handling for the user's
+      own locale. Semi.Avalonia resolves its Locale through CultureInfo, so this must stay off.
+    -->
+    <InvariantGlobalization>false</InvariantGlobalization>
+    <AccelerateBuildsInVisualStudio>true</AccelerateBuildsInVisualStudio>
+  </PropertyGroup>
+
+  <!--
+    Compiled bindings: Avalonia validates every {Binding} against the view's
+    x:DataType at BUILD time instead of failing silently at runtime.
+    This is the single biggest quality-of-life difference from WPF, where a
+    typo'd binding path just quietly renders nothing.
+  -->
+  <PropertyGroup>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+  </PropertyGroup>
+
+</Project>

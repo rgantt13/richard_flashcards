@@ -1,0 +1,361 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:Flashcards.Desktop.Controls.Shared"
+             xmlns:subj="clr-namespace:Flashcards.Desktop.Controls.Subjects"
+             xmlns:vm="clr-namespace:Flashcards.Desktop.ViewModels.Manage"
+             xmlns:contracts="clr-namespace:Flashcards.Application.Contracts;assembly=Flashcards.Application"
+             x:Class="Flashcards.Desktop.Views.Manage.ManagementView"
+             x:DataType="vm:ManagementViewModel"
+             x:Name="Root">
+
+    <UserControl.Styles>
+        <!--
+            A row action: a square, chromeless icon button. The label moved into ToolTip.Tip, so
+            the name appears on hover instead of taking up room on every row.
+        -->
+        <Style Selector="Button.rowAction">
+            <Setter Property="Width" Value="30" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <!-- Quiet until pointed at, so a list of rows is not a wall of icons. -->
+            <Setter Property="Opacity" Value="0.55" />
+        </Style>
+
+        <Style Selector="Button.rowAction:pointerover">
+            <Setter Property="Opacity" Value="1" />
+            <Setter Property="Background" Value="{DynamicResource SemiColorFill1}" />
+        </Style>
+
+        <!--
+            The icon takes its colour from the button's Foreground, so a variant only has to change
+            Foreground and the glyph follows — no second setter aimed at the Path.
+        -->
+        <Style Selector="Button.rowAction.danger:pointerover">
+            <Setter Property="Foreground" Value="{DynamicResource SemiColorDanger}" />
+            <Setter Property="Background" Value="{DynamicResource SemiColorFill1}" />
+        </Style>
+
+        <Style Selector="Button.rowAction">
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.1" />
+                </Transitions>
+            </Setter>
+        </Style>
+
+        <Style Selector="TextBlock.fieldLabel">
+            <Setter Property="FontSize" Value="10" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Opacity" Value="0.5" />
+            <Setter Property="Margin" Value="2,0,0,3" />
+        </Style>
+
+    </UserControl.Styles>
+
+    <!--
+        One page: filters across the top, then the grid. There is no sidebar and no side panel —
+        everything on this screen is about acting on the list underneath it.
+    -->
+    <DockPanel Margin="28,24">
+
+        <!--
+            The page title, and beside it the two actions that are about the library as a whole
+            rather than about anything in the grid. They live up here for that reason: the footer
+            below is paging, and the filter bar is filtering.
+
+            Import on the left and Export on the right, following the convention the rest of the
+            app uses — leftwards brings things in and rightwards sends them on.
+        -->
+        <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,8,Auto" Margin="0,0,0,14">
+            <StackPanel Grid.Column="0" Spacing="2">
+                <TextBlock Text="Manage cards" Classes="h1" />
+                <TextBlock Text="{Binding ResultSummary}" Classes="muted" />
+            </StackPanel>
+
+            <Button Grid.Column="1" MinWidth="96" VerticalAlignment="Center"
+                    Content="Import"
+                    HorizontalContentAlignment="Center"
+                    ToolTip.Tip="Read subjects and cards out of a deck file"
+                    Command="{Binding ImportCommand}" />
+
+            <Button Grid.Column="3" MinWidth="96" VerticalAlignment="Center"
+                    Content="Export"
+                    HorizontalContentAlignment="Center"
+                    ToolTip.Tip="Write chosen subjects and cards to a deck file"
+                    Command="{Binding ExportCommand}" />
+        </Grid>
+
+        <!--
+            ····· the subject tree ·····
+
+            Docked before the filter bar so it runs the full height beside both the filters and the
+            grid: it scopes everything to its right, and a control that scopes the whole page should
+            not sit inside one part of it.
+
+            Rows are a flat list carrying their own depth rather than nested containers. That is what
+            makes the drag and drop unambiguous — every row is a sibling in one items panel, so a
+            drop lands on exactly one of them, with no question of whether the pointer is over a
+            child or over the box that holds it.
+        -->
+        <Border DockPanel.Dock="Left" Classes="card" Width="330" Margin="0,0,14,0" Padding="0">
+            <DockPanel Margin="14,12">
+
+                <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="0,0,0,8">
+                    <StackPanel Grid.Column="0" Spacing="1">
+                        <TextBlock Text="SUBJECTS" Classes="fieldLabel" />
+                        <TextBlock Classes="muted" FontSize="11" TextTrimming="CharacterEllipsis"
+                                   Text="{Binding SubjectScopeLabel}" />
+                    </StackPanel>
+
+                    <Button Grid.Column="1" Padding="8,3" FontSize="11" VerticalAlignment="Center"
+                            Content="All"
+                            ToolTip.Tip="Stop filtering by subject"
+                            Command="{Binding ClearSubjectFilterCommand}" />
+                </Grid>
+
+                <TextBox DockPanel.Dock="Top" Margin="0,0,0,8"
+                         Text="{Binding SubjectSearch, Mode=TwoWay}"
+                         Watermark="Find a subject" />
+
+                <!-- create, filed under whatever is selected -->
+                <StackPanel DockPanel.Dock="Bottom" Spacing="5" Margin="0,10,0,0">
+                    <TextBlock Text="{Binding SubjectError}" FontSize="11" TextWrapping="Wrap"
+                               Foreground="{DynamicResource SemiColorDanger}"
+                               IsVisible="{Binding SubjectError, Converter={StaticResource NotNull}}" />
+
+                    <Grid ColumnDefinitions="*,6,Auto">
+                        <TextBox Grid.Column="0" Text="{Binding NewSubjectName, Mode=TwoWay}"
+                                 Watermark="new subject…" />
+                        <Button Grid.Column="2" Content="Add" Command="{Binding CreateSubjectCommand}" />
+                    </Grid>
+
+                    <TextBlock Classes="muted" FontSize="10" TextWrapping="Wrap"
+                               Text="Added under the selected subject, or at the top level if none is. Drag a subject onto another to re-file it." />
+                </StackPanel>
+
+                <!--
+                    The same control the create dialog uses. Extracted once both needed it: two
+                    copies of the pointer-threshold and drop-target logic would have been two things
+                    to keep in step, and that logic is the part most likely to need changing.
+                -->
+                <subj:SubjectTreeView ItemsSource="{Binding SubjectNodes}"
+                                          SelectedItem="{Binding SelectedSubject, Mode=TwoWay}"
+                                          MoveCommand="{Binding MoveSubjectCommand}"
+                                          ShowActions="True"
+                                          RenameCommand="{Binding RenameSubjectCommand}"
+                                          DeleteCommand="{Binding DeleteSubjectCommand}" />
+            </DockPanel>
+        </Border>
+
+        <!-- filter bar -->
+        <Border DockPanel.Dock="Top" Classes="card" Margin="0,0,0,14" Padding="16,12">
+            <StackPanel Spacing="10">
+
+                <Grid ColumnDefinitions="2*,12,150,12,170,12,Auto,12,Auto" >
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="SEARCH" Classes="fieldLabel" />
+                        <TextBox Text="{Binding SearchText, Mode=TwoWay}"
+                                 Watermark="name or anything written on either side" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="TYPE" Classes="fieldLabel" />
+                        <ComboBox ItemsSource="{Binding CardTypeFilters}"
+                                  SelectedItem="{Binding CardTypeFilter, Mode=TwoWay}"
+                                  HorizontalAlignment="Stretch"
+                                  PlaceholderText="any" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="4">
+                        <TextBlock Text="SORT BY" Classes="fieldLabel" />
+                        <ComboBox ItemsSource="{Binding SortFields}"
+                                  SelectedItem="{Binding SortBy, Mode=TwoWay}"
+                                  HorizontalAlignment="Stretch" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="6" VerticalAlignment="Bottom">
+                        <CheckBox Content="Descending" IsChecked="{Binding SortDescending, Mode=TwoWay}" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="8" VerticalAlignment="Bottom">
+                        <Button Content="Clear filters" Command="{Binding ClearFiltersCommand}" />
+                    </StackPanel>
+                </Grid>
+
+                <StackPanel Orientation="Horizontal" Spacing="18">
+                    <CheckBox Content="Only ones I've never answered" IsChecked="{Binding UntouchedOnly, Mode=TwoWay}" />
+                    <CheckBox Content="Include suspended" IsChecked="{Binding IncludeSuspended, Mode=TwoWay}" />
+                </StackPanel>
+
+            </StackPanel>
+        </Border>
+
+        <!--
+            Paging, split rather than paired: back on the left, forward on the right, and what just
+            happened between them. Same arrangement as the designer's footer and the study session's
+            grading bar.
+        -->
+        <Grid DockPanel.Dock="Bottom" ColumnDefinitions="Auto,16,*,16,Auto" Margin="0,12,0,0">
+            <Button Grid.Column="0" Content="Previous" MinWidth="96"
+                    HorizontalContentAlignment="Center"
+                    Command="{Binding PreviousPageCommand}" />
+
+            <StackPanel Grid.Column="2" VerticalAlignment="Center" Spacing="2">
+                <TextBlock Text="{Binding ErrorMessage}"
+                           Foreground="{DynamicResource SemiColorDanger}"
+                           TextWrapping="Wrap"
+                           HorizontalAlignment="Center" TextAlignment="Center"
+                           IsVisible="{Binding ErrorMessage, Converter={StaticResource NotNull}}" />
+                <TextBlock Text="{Binding StatusMessage}" Classes="muted"
+                           TextWrapping="Wrap"
+                           HorizontalAlignment="Center" TextAlignment="Center"
+                           IsVisible="{Binding StatusMessage, Converter={StaticResource NotNull}}" />
+            </StackPanel>
+
+            <Button Grid.Column="4" Content="Next" MinWidth="96"
+                    HorizontalContentAlignment="Center"
+                    Command="{Binding NextPageCommand}" />
+        </Grid>
+
+        <Border Classes="card" Padding="0">
+            <DockPanel>
+                <!-- header row -->
+                <Border DockPanel.Dock="Top" Padding="16,10"
+                        BorderBrush="{DynamicResource SemiColorBorder}" BorderThickness="0,0,0,1">
+                    <Grid ColumnDefinitions="30,10,1.9*,1.5*,72,1.1*,140">
+                        <TextBlock Grid.Column="2" Text="CARD"     FontSize="10" FontWeight="Bold" Opacity="0.5" />
+                        <TextBlock Grid.Column="3" Text="SUBJECT"  FontSize="10" FontWeight="Bold" Opacity="0.5" />
+                        <TextBlock Grid.Column="4" Text="TYPE"     FontSize="10" FontWeight="Bold" Opacity="0.5" />
+                        <TextBlock Grid.Column="5" Text="RECORD"   FontSize="10" FontWeight="Bold" Opacity="0.5" />
+                    </Grid>
+                </Border>
+
+                <TextBlock DockPanel.Dock="Top" Margin="16" Classes="muted"
+                           Text="Nothing matches those filters."
+                           IsVisible="{Binding Results.Count, Converter={StaticResource AnyItems}, ConverterParameter=invert}" />
+
+                <ListBox ItemsSource="{Binding Results}"
+                         SelectedItem="{Binding Selected, Mode=TwoWay}"
+                         Background="Transparent"
+                         BorderThickness="0">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="contracts:FlashcardSummary">
+                            <Grid ColumnDefinitions="30,10,1.9*,1.5*,72,1.1*,140" Margin="0,6">
+
+                                <!--
+                                    The card's own mark, in place of the plain colour strip that
+                                    used to sit here. The strip only ever showed which subject a
+                                    card was in — the chips two columns over already say that — so
+                                    this column now identifies the card itself.
+                                -->
+                                <controls:Identicon Grid.Column="0" Variant="Card"
+                                                    Width="26" Height="26"
+                                                    VerticalAlignment="Center"
+                                                    Seed="{Binding Id}" />
+
+                                <StackPanel Grid.Column="2" Spacing="2" Margin="0,0,10,0">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                        <Border Classes="chip" Background="{DynamicResource SemiColorFill1}"
+                                                IsVisible="{Binding IsSuspended}">
+                                            <TextBlock Text="suspended" FontSize="10" />
+                                        </Border>
+                                        <TextBlock Text="img" FontSize="10" Opacity="0.5" VerticalAlignment="Center"
+                                                   IsVisible="{Binding HasImages}" />
+                                    </StackPanel>
+                                    <TextBlock Text="{Binding QuestionPreview}" Classes="muted"
+                                               TextTrimming="CharacterEllipsis" MaxLines="1" />
+                                </StackPanel>
+
+                                <!-- A card can wear several tags, so this is a wrapped list of chips. -->
+                                <ItemsControl Grid.Column="3" ItemsSource="{Binding Subjects}" VerticalAlignment="Center">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="contracts:SubjectRef">
+                                            <!--
+                                                Inherited subjects are dimmed. The card was never
+                                                tagged with them — they come from where its real
+                                                tags sit in the tree — and showing both at equal
+                                                weight would make the tree look like it had quietly
+                                                edited the card.
+                                            -->
+                                            <subj:SubjectChip Margin="0,1,4,1"
+                                                                  SubjectName="{Binding Name}"
+                                                                  ColorHex="{Binding ColorHex}"
+                                                                  Opacity="{Binding IsInherited, Converter={StaticResource InheritedOpacity}}"
+                                                                  ToolTip.Tip="{Binding IsInherited, Converter={StaticResource InheritedTip}}" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <TextBlock Grid.Column="4" VerticalAlignment="Center" Classes="muted"
+                                           Text="{Binding CardType, Converter={StaticResource CardTypeGlyph}}" />
+
+                                <!-- How you do on this card, in place of when it is next due. -->
+                                <StackPanel Grid.Column="5" Spacing="1" VerticalAlignment="Center">
+                                    <TextBlock FontSize="12"
+                                               IsVisible="{Binding Practice.HasHistory}"
+                                               Text="{Binding Practice.Accuracy, StringFormat='{}{0:P0} correct'}" />
+                                    <TextBlock FontSize="10" Opacity="0.5"
+                                               IsVisible="{Binding Practice.HasHistory}"
+                                               Text="{Binding Practice.Answered, StringFormat='{}{0} answered'}" />
+                                    <TextBlock FontSize="11" Opacity="0.5" Text="not practised"
+                                               IsVisible="{Binding IsUntouched}" />
+                                </StackPanel>
+
+                                <!--
+                                    Icon actions. Each button's name lives in ToolTip.Tip, which is
+                                    what shows it on hover; the Path fills from the button's own
+                                    Foreground so the danger variant only has to recolour the button.
+                                -->
+                                <StackPanel Grid.Column="6" Orientation="Horizontal" Spacing="2"
+                                            VerticalAlignment="Center" HorizontalAlignment="Right">
+                                    <Button Classes="rowAction" ToolTip.Tip="Edit"
+                                            Command="{Binding $parent[UserControl].((vm:ManagementViewModel)DataContext).EditCommand}"
+                                            CommandParameter="{Binding}">
+                                        <Path Data="{StaticResource IconEdit}"
+                                              Fill="{Binding $parent[Button].Foreground}"
+                                              Width="15" Height="15" Stretch="Uniform" />
+                                    </Button>
+
+                                    <Button Classes="rowAction" ToolTip.Tip="Forget — clear this card's answer history"
+                                            Command="{Binding $parent[UserControl].((vm:ManagementViewModel)DataContext).ClearHistoryCommand}"
+                                            CommandParameter="{Binding}">
+                                        <Path Data="{StaticResource IconHistory}"
+                                              Fill="{Binding $parent[Button].Foreground}"
+                                              Width="15" Height="15" Stretch="Uniform" />
+                                    </Button>
+
+                                    <Button Classes="rowAction" ToolTip.Tip="Suspend — keep the card but skip it when studying"
+                                            Command="{Binding $parent[UserControl].((vm:ManagementViewModel)DataContext).ToggleSuspendCommand}"
+                                            CommandParameter="{Binding}">
+                                        <Path Data="{StaticResource IconSuspend}"
+                                              Fill="{Binding $parent[Button].Foreground}"
+                                              Width="14" Height="14" Stretch="Uniform" />
+                                    </Button>
+
+                                    <Button Classes="rowAction danger" ToolTip.Tip="Delete"
+                                            Command="{Binding $parent[UserControl].((vm:ManagementViewModel)DataContext).DeleteCommand}"
+                                            CommandParameter="{Binding}">
+                                        <Path Data="{StaticResource IconDelete}"
+                                              Fill="{Binding $parent[Button].Foreground}"
+                                              Width="15" Height="15" Stretch="Uniform" />
+                                    </Button>
+                                </StackPanel>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+        </Border>
+    </DockPanel>
+</UserControl>

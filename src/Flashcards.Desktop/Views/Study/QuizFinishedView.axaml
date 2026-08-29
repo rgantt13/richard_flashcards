@@ -1,0 +1,42 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:Flashcards.Desktop.ViewModels.Study"
+             xmlns:shared="clr-namespace:Flashcards.Desktop.ViewModels.Shared"
+             xmlns:contracts="clr-namespace:Flashcards.Application.Contracts;assembly=Flashcards.Application"
+             xmlns:ctrl="clr-namespace:Flashcards.Desktop.Controls.Shared"
+             xmlns:subj="clr-namespace:Flashcards.Desktop.Controls.Subjects"
+             x:DataType="vm:QuizViewModel"
+             x:Class="Flashcards.Desktop.Views.Study.QuizFinishedView">
+
+    <!--
+        The scoreboard at the end of a session. Shown by QuizView once the queue is empty or the
+        session was ended early.
+    -->
+
+    <StackPanel
+                VerticalAlignment="Center" HorizontalAlignment="Center"
+                Spacing="18" MaxWidth="520">
+
+        <TextBlock Text="Session complete" Classes="h1" HorizontalAlignment="Center" />
+
+        <TextBlock Text="{Binding StatusMessage}" Classes="muted" TextWrapping="Wrap"
+                   HorizontalAlignment="Center" TextAlignment="Center"
+                   IsVisible="{Binding StatusMessage, Converter={StaticResource NotNull}}" />
+
+        <Border Classes="card">
+            <UniformGrid Columns="2">
+                <StackPanel Spacing="2" HorizontalAlignment="Center">
+                    <TextBlock Text="{Binding ReviewedCount}" FontSize="32" FontWeight="Bold" HorizontalAlignment="Center" />
+                    <TextBlock Text="cards reviewed" Classes="muted" HorizontalAlignment="Center" />
+                </StackPanel>
+                <StackPanel Spacing="2" HorizontalAlignment="Center">
+                    <TextBlock Text="{Binding AccuracyLabel}" FontSize="32" FontWeight="Bold" HorizontalAlignment="Center" />
+                    <TextBlock Text="recalled" Classes="muted" HorizontalAlignment="Center" />
+                </StackPanel>
+            </UniformGrid>
+        </Border>
+
+        <Button Content="Back to setup" Classes="Primary" HorizontalAlignment="Center"
+                Padding="22,10" Command="{Binding BackToSetupCommand}" />
+    </StackPanel>
+</UserControl>

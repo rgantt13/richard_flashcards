@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Flashcards.Domain\Flashcards.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      The only dependency allowed here is the DI abstraction, so this project can
+      register its own handlers. It knows nothing about Dapper, SQLite or Avalonia.
+    -->
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+  </ItemGroup>
+
+</Project>

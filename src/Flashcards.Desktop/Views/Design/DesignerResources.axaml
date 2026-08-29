@@ -1,0 +1,101 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:vm="clr-namespace:Flashcards.Desktop.ViewModels.Design"
+             xmlns:shared="clr-namespace:Flashcards.Desktop.ViewModels.Shared"
+             xmlns:subjvm="clr-namespace:Flashcards.Desktop.ViewModels.Subjects"
+                    xmlns:controls="clr-namespace:Flashcards.Desktop.Controls.Shared"
+             xmlns:subj="clr-namespace:Flashcards.Desktop.Controls.Subjects"
+                    xmlns:cards="clr-namespace:Flashcards.Domain.Cards;assembly=Flashcards.Domain">
+
+    <!--
+        Markup shared by the designer boards.
+
+        It lives in its own dictionary because a StaticResource is resolved while a file is being
+        parsed, before that file has been attached to anything — so a child board cannot reach a
+        resource declared on CardEditorView, even though it will end up nested inside it. Each
+        board that needs this merges it explicitly.
+
+        Styles are the opposite and do not need this treatment: they are applied once a control is
+        in the tree, so the styles on CardEditorView reach every board inside it.
+    -->
+
+
+        <!--
+            One element on the artboard. Used for both faces of a standard card and for the cloze
+            passage's supporting blocks; the handle strip carries reorder/delete, and the body
+            switches between a text editor and a rendered image.
+        -->
+        <DataTemplate x:Key="ElementTemplate" x:DataType="vm:BlockEditorViewModel">
+            <Border Classes="element" Classes.selected="{Binding IsSelected}">
+                <Grid ColumnDefinitions="Auto,*">
+
+                    <StackPanel Grid.Column="0" Width="24" Margin="0,2,4,0">
+                        <Border Background="{DynamicResource SemiColorFill1}"
+                                CornerRadius="4" Padding="0,3" Margin="0,0,0,4">
+                            <TextBlock Text="{Binding KindGlyph}"
+                                       FontSize="9" FontWeight="Bold"
+                                       HorizontalAlignment="Center" />
+                        </Border>
+
+                        <Button Classes="handle" Content="▲"
+                                ToolTip.Tip="Move up"
+                                Command="{Binding $parent[UserControl].((vm:CardEditorViewModel)DataContext).MoveBlockUpCommand}"
+                                CommandParameter="{Binding}" />
+                        <Button Classes="handle" Content="▼"
+                                ToolTip.Tip="Move down"
+                                Command="{Binding $parent[UserControl].((vm:CardEditorViewModel)DataContext).MoveBlockDownCommand}"
+                                CommandParameter="{Binding}" />
+                        <Button Classes="handle" Content="✕"
+                                ToolTip.Tip="Delete element"
+                                Command="{Binding $parent[UserControl].((vm:CardEditorViewModel)DataContext).RemoveBlockCommand}"
+                                CommandParameter="{Binding}" />
+                    </StackPanel>
+
+                    <Panel Grid.Column="1">
+
+                        <!-- Words, code, markdown -->
+                        <TextBox Classes="canvasText"
+                                 IsVisible="{Binding IsTextual}"
+                                 Text="{Binding Text, Mode=TwoWay}"
+                                 AcceptsReturn="True"
+                                 TextWrapping="Wrap"
+                                 MinHeight="60"
+                                 FontFamily="{Binding EditorFont}"
+                                 SelectionStart="{Binding SelectionStart, Mode=TwoWay}"
+                                 SelectionEnd="{Binding SelectionEnd, Mode=TwoWay}"
+                                 Watermark="Type here — **bold**, *italic*, `code`, - bullets, # headings" />
+
+                        <!-- Pictures: rendered through the same presenter the study screen uses -->
+                        <Panel IsVisible="{Binding IsImage}">
+                            <Border IsVisible="{Binding IsEmpty}"
+                                    BorderBrush="{DynamicResource SemiColorBorder}"
+                                    BorderThickness="1"
+                                    CornerRadius="7"
+                                    Padding="20"
+                                    MinHeight="110">
+                                <StackPanel VerticalAlignment="Center" Spacing="8">
+                                    <TextBlock Text="Drop an image here"
+                                               HorizontalAlignment="Center"
+                                               Classes="muted" />
+                                    <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
+                                        <Button Content="Paste"
+                                                Command="{Binding $parent[UserControl].((vm:CardEditorViewModel)DataContext).PasteImageCommand}"
+                                                CommandParameter="{Binding}" />
+                                        <Button Content="Browse…"
+                                                Command="{Binding $parent[UserControl].((vm:CardEditorViewModel)DataContext).BrowseImageCommand}"
+                                                CommandParameter="{Binding}" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <controls:RichContentPresenter
+                                Blocks="{Binding SelfPreview}"
+                                IsVisible="{Binding IsEmpty, Converter={StaticResource NotNull}, ConverterParameter=invert}" />
+                        </Panel>
+
+                    </Panel>
+                </Grid>
+            </Border>
+        </DataTemplate>
+
+</ResourceDictionary>

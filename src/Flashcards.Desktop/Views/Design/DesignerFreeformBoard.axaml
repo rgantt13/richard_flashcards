@@ -1,0 +1,206 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:Flashcards.Desktop.ViewModels.Design"
+             xmlns:shared="clr-namespace:Flashcards.Desktop.ViewModels.Shared"
+             xmlns:subjvm="clr-namespace:Flashcards.Desktop.ViewModels.Subjects"
+             xmlns:controls="clr-namespace:Flashcards.Desktop.Controls.Shared"
+             xmlns:subj="clr-namespace:Flashcards.Desktop.Controls.Subjects"
+             xmlns:cards="clr-namespace:Flashcards.Domain.Cards;assembly=Flashcards.Domain"
+             x:DataType="vm:CardEditorViewModel"
+             x:Class="Flashcards.Desktop.Views.Design.DesignerFreeformBoard">
+
+    <!--
+        A designed card. Tools across the top, the question/answer toggle centred beneath them, and
+        the card itself below that.
+
+        The card sits inside a Viewbox at its fixed logical size (CardCanvas). That is what makes
+        the geometry portable: elements and ink are authored in card coordinates, and Avalonia
+        scales the whole surface — including pointer positions — to whatever space the window
+        happens to give it.
+
+        Unlike the other boards this one has real code-behind, because moving and resizing elements
+        is pointer work that no binding expresses. It owns DesignSurface, so it owns that code; see
+        DesignerFreeformBoard.axaml.cs.
+    -->
+
+<DockPanel Margin="16,12">
+
+    <!-- tools -->
+    <Border DockPanel.Dock="Top" Classes="toolbar">
+        <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center">
+
+            <ToggleButton Classes="tool" Content="Select" ToolTip.Tip="Move and resize elements"
+                          IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBool}, ConverterParameter=Select, Mode=TwoWay}" />
+            <ToggleButton Classes="tool" Content="Text" ToolTip.Tip="Add a markdown text box"
+                          IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBool}, ConverterParameter=Text, Mode=TwoWay}" />
+            <ToggleButton Classes="tool" Content="Image" ToolTip.Tip="Add an image"
+                          IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBool}, ConverterParameter=Image, Mode=TwoWay}" />
+            <ToggleButton Classes="tool" Content="Draw" ToolTip.Tip="Draw freehand"
+                          IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBool}, ConverterParameter=Draw, Mode=TwoWay}" />
+            <ToggleButton Classes="tool" Content="Eraser" ToolTip.Tip="Rub out whole strokes"
+                          IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBool}, ConverterParameter=Erase, Mode=TwoWay}" />
+
+            <Border Width="1" Margin="8,4" Background="{DynamicResource SemiColorBorder}" />
+
+            <!-- Pen settings, only while there is ink to set. -->
+            <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center"
+                        IsVisible="{Binding IsDrawingTool}">
+                <ItemsControl ItemsSource="{Binding InkPalette}" VerticalAlignment="Center">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" Spacing="3" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="x:String">
+                            <Button Width="20" Height="20" Padding="0" CornerRadius="10"
+                                    Background="{Binding ., Converter={StaticResource HexBrush}}"
+                                    Command="{Binding $parent[UserControl].((vm:CardEditorViewModel)DataContext).PickInkColorCommand}"
+                                    CommandParameter="{Binding}" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <Slider Width="90" Minimum="1" Maximum="16"
+                        VerticalAlignment="Center"
+                        ToolTip.Tip="Pen thickness"
+                        Value="{Binding InkThickness, Mode=TwoWay}" />
+            </StackPanel>
+
+            <Button Classes="addElement" Content="Clear ink"
+                    VerticalAlignment="Center"
+                    IsVisible="{Binding IsInkActive}"
+                    Command="{Binding ClearInkCommand}" />
+        </StackPanel>
+    </Border>
+
+    <!-- which side am I designing -->
+    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="0"
+                HorizontalAlignment="Center" Margin="0,10,0,12">
+        <ToggleButton Classes="face" Content="Question"
+                      IsChecked="{Binding DesignFace, Converter={StaticResource EnumToBool}, ConverterParameter=Question, Mode=TwoWay}" />
+        <ToggleButton Classes="face" Content="Answer"
+                      IsChecked="{Binding DesignFace, Converter={StaticResource EnumToBool}, ConverterParameter=Answer, Mode=TwoWay}" />
+    </StackPanel>
+
+    <!-- the card -->
+    <Viewbox Stretch="Uniform" StretchDirection="DownOnly">
+        <Border Classes="artboard"
+                Width="{Binding CanvasWidth}"
+                Height="{Binding CanvasHeight}">
+            <Panel x:Name="DesignSurface">
+
+                <ItemsControl ItemsSource="{Binding ActiveFaceBlocks}">
+                    <!--
+                        A plain overlapping Panel, not a Canvas: each element
+                        positions itself with a top-left margin (see
+                        BlockEditorViewModel.Placement), which keeps the binding
+                        inside the template where its type is known.
+                    -->
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <Panel />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:BlockEditorViewModel">
+                            <Border Classes="placed"
+                                    Classes.selected="{Binding IsSelected}"
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Top"
+                                    Margin="{Binding Placement}"
+                                    Width="{Binding Width}"
+                                    Height="{Binding Height}">
+                                <Panel>
+
+                                    <TextBox Classes="canvasText"
+                                             IsVisible="{Binding IsTextual}"
+                                             Text="{Binding Text, Mode=TwoWay}"
+                                             AcceptsReturn="True"
+                                             TextWrapping="Wrap"
+                                             VerticalAlignment="Stretch"
+                                             FontFamily="{Binding EditorFont}"
+                                             SelectionStart="{Binding SelectionStart, Mode=TwoWay}"
+                                             SelectionEnd="{Binding SelectionEnd, Mode=TwoWay}"
+                                             Watermark="Type here" />
+
+                                    <Panel IsVisible="{Binding IsImage}">
+                                        <Border IsVisible="{Binding IsEmpty}"
+                                                BorderBrush="{DynamicResource SemiColorBorder}"
+                                                BorderThickness="1"
+                                                CornerRadius="6">
+                                            <TextBlock Text="Drop an image"
+                                                       Classes="muted"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center" />
+                                        </Border>
+                                        <controls:RichContentPresenter
+                                            Blocks="{Binding SelfPreview}"
+                                            IsVisible="{Binding IsEmpty, Converter={StaticResource NotNull}, ConverterParameter=invert}" />
+                                    </Panel>
+
+                                    <!--
+                                        Move handle, top-left. Clicking inside a
+                                        text element places a caret rather than
+                                        starting a drag, so text needs somewhere
+                                        deliberate to grab. Tagged for the pointer
+                                        handler in the code-behind.
+                                    -->
+                                    <Border Classes="movegrip"
+                                            Tag="move"
+                                            HorizontalAlignment="Left"
+                                            VerticalAlignment="Top"
+                                            ToolTip.Tip="Drag to move"
+                                            IsVisible="{Binding IsSelected}">
+                                        <TextBlock Text="✥"
+                                                   FontSize="11"
+                                                   Foreground="White"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center" />
+                                    </Border>
+
+                                    <!-- Delete, top-right, only on the selected element. -->
+                                    <Button Classes="handle"
+                                            Content="✕"
+                                            HorizontalAlignment="Right"
+                                            VerticalAlignment="Top"
+                                            Margin="0,-6,-6,0"
+                                            ToolTip.Tip="Delete element"
+                                            IsVisible="{Binding IsSelected}"
+                                            Command="{Binding $parent[UserControl].((vm:CardEditorViewModel)DataContext).RemoveBlockCommand}"
+                                            CommandParameter="{Binding}" />
+
+                                    <!--
+                                        Resize grip. Tagged so the pointer handler
+                                        in the code-behind can tell a resize drag
+                                        from a move drag.
+                                    -->
+                                    <Border Classes="grip"
+                                            Tag="resize"
+                                            HorizontalAlignment="Right"
+                                            VerticalAlignment="Bottom"
+                                            IsVisible="{Binding IsSelected}" />
+                                </Panel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <!--
+                    Ink sits above the elements so you can annotate over them, but
+                    only takes the pointer while a pen tool is chosen — otherwise it
+                    would swallow every click meant for an element underneath.
+                -->
+                <controls:InkSurface Strokes="{Binding ActiveStrokes}"
+                                     IsDrawing="{Binding IsDrawingTool}"
+                                     IsErasing="{Binding IsErasingTool}"
+                                     StrokeColor="{Binding InkColor}"
+                                     StrokeThickness="{Binding InkThickness}"
+                                     IsHitTestVisible="{Binding IsInkActive}" />
+            </Panel>
+        </Border>
+    </Viewbox>
+
+</DockPanel>
+</UserControl>

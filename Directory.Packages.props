@@ -1,0 +1,58 @@
+<Project>
+
+  <!--
+    Central Package Management (CPM).
+    Projects reference packages WITHOUT a Version attribute; the version comes
+    from here. If a restore fails because a version has moved on, this is the
+    only file you need to edit.
+  -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+  </PropertyGroup>
+
+  <ItemGroup Label="Avalonia">
+    <!--
+      Pinned to the 11.3 line, not 12.x, on purpose.
+      Avalonia 12 reworked the clipboard (IAsyncDataTransfer replacing IClipboard.GetDataAsync),
+      renamed DataFormats.* to DataFormat.*, and swapped DragEventArgs.Data for .DataTransfer.
+      This app leans on all three for image paste and drag-drop. See docs/upgrading-to-avalonia-12.md
+      for the migration when you want it.
+    -->
+    <PackageVersion Include="Avalonia" Version="11.3.15" />
+    <PackageVersion Include="Avalonia.Desktop" Version="11.3.15" />
+    <PackageVersion Include="Avalonia.Diagnostics" Version="11.3.15" />
+    <PackageVersion Include="Avalonia.Fonts.Inter" Version="11.3.15" />
+    <PackageVersion Include="Avalonia.Themes.Fluent" Version="11.3.15" />
+  </ItemGroup>
+
+  <ItemGroup Label="Theme">
+    <!-- Semi Design theme for Avalonia. Its version tracks Avalonia's. -->
+    <PackageVersion Include="Semi.Avalonia" Version="11.3.14" />
+  </ItemGroup>
+
+  <ItemGroup Label="MVVM">
+    <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+  </ItemGroup>
+
+  <ItemGroup Label="Data">
+    <PackageVersion Include="Dapper" Version="2.1.79" />
+    <PackageVersion Include="Microsoft.Data.Sqlite" Version="10.0.11" />
+  </ItemGroup>
+
+  <ItemGroup Label="Hosting">
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Logging" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="Testing">
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageVersion Include="xunit" Version="2.9.3" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
+    <PackageVersion Include="Shouldly" Version="4.3.0" />
+  </ItemGroup>
+
+</Project>

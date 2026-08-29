@@ -1,0 +1,137 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:Flashcards.Desktop.Controls.Shared"
+             xmlns:vm="clr-namespace:Flashcards.Desktop.ViewModels.Subjects"
+             x:Class="Flashcards.Desktop.Controls.Subjects.SubjectTreeView"
+             x:Name="Root">
+
+    <UserControl.Styles>
+        <!-- One subject in the tree. -->
+        <Style Selector="Border.treeRow">
+            <Setter Property="Padding" Value="6,5" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+        </Style>
+
+        <!--
+            The row a drop would land on. Deliberately loud: with rows this close together, the only
+            thing standing between "re-file under SQL" and "re-file under SQLite" is knowing which
+            one is lit.
+        -->
+        <Style Selector="Border.treeRow.dropTarget">
+            <Setter Property="Background" Value="{DynamicResource SemiColorPrimary}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SemiColorPrimary}" />
+        </Style>
+
+        <Style Selector="Border.treeRow.dropTarget TextBlock">
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+
+        <!-- The row being dragged fades, so it reads as picked up rather than duplicated. -->
+        <Style Selector="Border.treeRow.dragging">
+            <Setter Property="Opacity" Value="0.4" />
+        </Style>
+
+        <!--
+            The not-yet-created subject: a dashed outline in the accent colour. It has to be
+            obviously different from the saved rows around it, because the whole point of showing it
+            in the tree is to preview a placement that has not happened yet.
+        -->
+        <Style Selector="Border.treeRow.pending">
+            <Setter Property="BorderBrush" Value="{DynamicResource SemiColorPrimary}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Background" Value="{DynamicResource SemiColorFill0}" />
+        </Style>
+
+        <Style Selector="Button.rowAction.tiny">
+            <Setter Property="Width" Value="22" />
+            <Setter Property="Height" Value="22" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="CornerRadius" Value="5" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Opacity" Value="0.35" />
+        </Style>
+
+        <Style Selector="Button.rowAction.tiny:pointerover">
+            <Setter Property="Opacity" Value="1" />
+            <Setter Property="Background" Value="{DynamicResource SemiColorFill1}" />
+        </Style>
+
+        <Style Selector="Button.rowAction.tiny.danger:pointerover">
+            <Setter Property="Foreground" Value="{DynamicResource SemiColorDanger}" />
+        </Style>
+    </UserControl.Styles>
+
+    <ListBox x:Name="Rows"
+             ItemsSource="{Binding #Root.ItemsSource}"
+             SelectedItem="{Binding #Root.SelectedItem, Mode=TwoWay}"
+             Background="Transparent"
+             BorderThickness="0"
+             Padding="0"
+             DragDrop.AllowDrop="True">
+        <ListBox.ItemTemplate>
+            <DataTemplate x:DataType="vm:SubjectNodeViewModel">
+                <!--
+                    Background is explicitly Transparent rather than unset: an unset background is
+                    not hit-testable, and the row has to receive the pointer across its whole width
+                    for a drop to land anywhere on it.
+                -->
+                <Border Classes="treeRow"
+                        Classes.dropTarget="{Binding IsDropTarget}"
+                        Classes.dragging="{Binding IsDragging}"
+                        Classes.pending="{Binding IsPending}"
+                        Background="Transparent">
+                    <Grid ColumnDefinitions="Auto,8,*,6,Auto,Auto">
+                        <controls:Identicon Grid.Column="0" Variant="Subject"
+                                            Width="20" Height="20"
+                                            VerticalAlignment="Center"
+                                            Margin="{Binding Indent}"
+                                            Seed="{Binding Id}"
+                                            AccentHex="{Binding ColorHex}" />
+
+                        <TextBlock Grid.Column="2" Text="{Binding Name}"
+                                   FontSize="12" VerticalAlignment="Center"
+                                   TextTrimming="CharacterEllipsis" />
+
+                        <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="4"
+                                    VerticalAlignment="Center"
+                                    IsVisible="{Binding ShowsCounts}">
+                            <TextBlock FontSize="11" Opacity="0.6"
+                                       ToolTip.Tip="Cards here and below"
+                                       Text="{Binding TotalCardCount}" />
+                            <!-- Only where a parent's own cards differ from its subtree. -->
+                            <TextBlock FontSize="10" Opacity="0.4"
+                                       IsVisible="{Binding ShowsDirectCount}"
+                                       Text="{Binding CardCount, StringFormat='{}({0})'}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="5" Orientation="Horizontal" Spacing="1"
+                                    VerticalAlignment="Center" Margin="4,0,0,0"
+                                    IsVisible="{Binding #Root.ShowActions}">
+                            <Button Classes="rowAction tiny" ToolTip.Tip="Rename"
+                                    AutomationProperties.Name="Rename subject"
+                                    Command="{Binding #Root.RenameCommand}"
+                                    CommandParameter="{Binding}">
+                                <Path Data="{StaticResource IconEdit}"
+                                      Fill="{Binding $parent[Button].Foreground}"
+                                      Width="12" Height="12" Stretch="Uniform" />
+                            </Button>
+                            <Button Classes="rowAction tiny danger" ToolTip.Tip="Delete"
+                                    AutomationProperties.Name="Delete subject"
+                                    Command="{Binding #Root.DeleteCommand}"
+                                    CommandParameter="{Binding}">
+                                <Path Data="{StaticResource IconDelete}"
+                                      Fill="{Binding $parent[Button].Foreground}"
+                                      Width="12" Height="12" Stretch="Uniform" />
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </DataTemplate>
+        </ListBox.ItemTemplate>
+    </ListBox>
+</UserControl>

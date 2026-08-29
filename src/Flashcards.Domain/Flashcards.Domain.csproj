@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Clean Architecture rule #1: the Domain project references NOTHING.
+    No NuGet packages, no other projects. If you ever feel the urge to add
+    Dapper or Avalonia here, the design has gone wrong.
+  -->
+
+</Project>

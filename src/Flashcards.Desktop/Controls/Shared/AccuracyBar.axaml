@@ -1,0 +1,65 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:controls="clr-namespace:Flashcards.Desktop.Controls.Shared"
+                    xmlns:conv="clr-namespace:Flashcards.Desktop.Converters">
+
+    <!-- Declared locally so this dictionary can be merged in any order. -->
+    <conv:CountToStarConverter x:Key="BarShare" />
+
+    <ControlTheme x:Key="{x:Type controls:AccuracyBar}" TargetType="controls:AccuracyBar">
+
+        <Setter Property="Height" Value="8" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+
+        <Setter Property="Template">
+            <ControlTemplate>
+                <!--
+                    The empty track sits underneath, so a bar with nothing answered still reads as
+                    a bar rather than as blank space.
+                -->
+                <Border CornerRadius="4"
+                        ClipToBounds="True"
+                        Background="{DynamicResource SemiColorFill1}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <!--
+                                Star widths taken straight from the counts, so the segments divide
+                                the track in exactly the ratio of right to wrong. Both zero gives
+                                two zero-width columns and the track shows through.
+                            -->
+                            <ColumnDefinition Width="{Binding Correct, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BarShare}}" />
+                            <ColumnDefinition Width="{Binding Wrong, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BarShare}}" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Grid.Column="0" Background="{DynamicResource SemiColorSuccess}" />
+                        <Border Grid.Column="1" Background="{DynamicResource SemiColorDanger}" />
+                    </Grid>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+
+        <!-- A chunkier version for the headline readouts. -->
+        <Style Selector="^.thick">
+            <Setter Property="Height" Value="14" />
+        </Style>
+
+        <!--
+            The headline infographic on a selection card, where the bar is the whole point of the
+            column rather than one detail in a row.
+        -->
+        <Style Selector="^.hero">
+            <Setter Property="Height" Value="22" />
+        </Style>
+
+        <!--
+            The list-row version. A selection grid shows one of these per row, so it is deliberately
+            hairline: enough to read the ratio out of the corner of your eye while scanning names,
+            and not enough to compete with them.
+        -->
+        <Style Selector="^.compact">
+            <Setter Property="Height" Value="4" />
+        </Style>
+
+    </ControlTheme>
+
+</ResourceDictionary>
