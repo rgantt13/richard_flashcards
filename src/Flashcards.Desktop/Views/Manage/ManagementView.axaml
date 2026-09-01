@@ -55,6 +55,35 @@
             <Setter Property="Margin" Value="2,0,0,3" />
         </Style>
 
+        <!--
+            ····· a button that carries a glyph beside its label ·····
+
+            Six of them on this page, so the repeated parts live here and each button's markup is
+            just the geometry and the word. The rules are keyed off the shape of the content, so a
+            button reads the same whether the glyph leads (Import) or trails (Next) — which is what
+            lets Previous and Next point the way they actually go.
+
+            Fill follows the button's own Foreground rather than being set to a colour, so a
+            disabled or hovered button takes its glyph with it. That is the same trick the row
+            action icons in the grid below use.
+        -->
+        <Style Selector="Button.iconText > StackPanel">
+            <Setter Property="Orientation" Value="Horizontal" />
+            <Setter Property="Spacing" Value="7" />
+        </Style>
+
+        <Style Selector="Button.iconText > StackPanel > Path">
+            <Setter Property="Width" Value="13" />
+            <Setter Property="Height" Value="13" />
+            <Setter Property="Stretch" Value="Uniform" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Fill" Value="{Binding $parent[Button].Foreground}" />
+        </Style>
+
+        <Style Selector="Button.iconText > StackPanel > TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
     </UserControl.Styles>
 
     <!--
@@ -77,17 +106,27 @@
                 <TextBlock Text="{Binding ResultSummary}" Classes="muted" />
             </StackPanel>
 
-            <Button Grid.Column="1" MinWidth="96" VerticalAlignment="Center"
-                    Content="Import"
+            <Button Grid.Column="1" Classes="iconText" MinWidth="96" VerticalAlignment="Center"
                     HorizontalContentAlignment="Center"
+                    AutomationProperties.Name="Import"
                     ToolTip.Tip="Read subjects and cards out of a deck file"
-                    Command="{Binding ImportCommand}" />
+                    Command="{Binding ImportCommand}">
+                <StackPanel>
+                    <Path Data="{StaticResource IconImport}" />
+                    <TextBlock Text="Import" />
+                </StackPanel>
+            </Button>
 
-            <Button Grid.Column="3" MinWidth="96" VerticalAlignment="Center"
-                    Content="Export"
+            <Button Grid.Column="3" Classes="iconText" MinWidth="96" VerticalAlignment="Center"
                     HorizontalContentAlignment="Center"
+                    AutomationProperties.Name="Export"
                     ToolTip.Tip="Write chosen subjects and cards to a deck file"
-                    Command="{Binding ExportCommand}" />
+                    Command="{Binding ExportCommand}">
+                <StackPanel>
+                    <Path Data="{StaticResource IconExport}" />
+                    <TextBlock Text="Export" />
+                </StackPanel>
+            </Button>
         </Grid>
 
         <!--
@@ -131,7 +170,14 @@
                     <Grid ColumnDefinitions="*,6,Auto">
                         <TextBox Grid.Column="0" Text="{Binding NewSubjectName, Mode=TwoWay}"
                                  Watermark="new subject…" />
-                        <Button Grid.Column="2" Content="Add" Command="{Binding CreateSubjectCommand}" />
+                        <Button Grid.Column="2" Classes="iconText"
+                                AutomationProperties.Name="Add"
+                                Command="{Binding CreateSubjectCommand}">
+                            <StackPanel>
+                                <Path Data="{StaticResource IconPlus}" />
+                                <TextBlock Text="Add" />
+                            </StackPanel>
+                        </Button>
                     </Grid>
 
                     <TextBlock Classes="muted" FontSize="10" TextWrapping="Wrap"
@@ -156,11 +202,24 @@
         <Border DockPanel.Dock="Top" Classes="card" Margin="0,0,0,14" Padding="16,12">
             <StackPanel Spacing="10">
 
-                <Grid ColumnDefinitions="2*,12,150,12,170,12,Auto,12,Auto" >
+                <!--
+                    SEARCH is the only star column, so it absorbs whatever the fixed ones leave —
+                    which at the default window width was 61px, about five characters. The two
+                    drop-downs were sized well above what their longest entry needs ("Multiple
+                    choice", "TimesAnswered"), so the room comes from there.
+                -->
+                <Grid ColumnDefinitions="2*,12,128,12,148,12,Auto,12,Auto" >
                     <StackPanel Grid.Column="0">
                         <TextBlock Text="SEARCH" Classes="fieldLabel" />
+                        <!--
+                            The watermark is short enough to actually fit the column. The old
+                            wording ("name or anything written on either side") was always cut off
+                            mid-phrase, and the icon on Clear filters took the last of the room it
+                            had. The tooltip carries the full story instead.
+                        -->
                         <TextBox Text="{Binding SearchText, Mode=TwoWay}"
-                                 Watermark="name or anything written on either side" />
+                                 Watermark="name or text"
+                                 ToolTip.Tip="Matches the card's name and anything written on either side of it" />
                     </StackPanel>
 
                     <StackPanel Grid.Column="2">
@@ -183,7 +242,14 @@
                     </StackPanel>
 
                     <StackPanel Grid.Column="8" VerticalAlignment="Bottom">
-                        <Button Content="Clear filters" Command="{Binding ClearFiltersCommand}" />
+                        <Button Classes="iconText"
+                                AutomationProperties.Name="Clear filters"
+                                Command="{Binding ClearFiltersCommand}">
+                            <StackPanel>
+                                <Path Data="{StaticResource IconFilterOff}" />
+                                <TextBlock Text="Clear filters" />
+                            </StackPanel>
+                        </Button>
                     </StackPanel>
                 </Grid>
 
@@ -201,9 +267,16 @@
             grading bar.
         -->
         <Grid DockPanel.Dock="Bottom" ColumnDefinitions="Auto,16,*,16,Auto" Margin="0,12,0,0">
-            <Button Grid.Column="0" Content="Previous" MinWidth="96"
+            <!-- The chevrons lead and trail respectively, so each button points where it goes. -->
+            <Button Grid.Column="0" Classes="iconText" MinWidth="96"
                     HorizontalContentAlignment="Center"
-                    Command="{Binding PreviousPageCommand}" />
+                    AutomationProperties.Name="Previous"
+                    Command="{Binding PreviousPageCommand}">
+                <StackPanel>
+                    <Path Data="{StaticResource IconChevronLeft}" />
+                    <TextBlock Text="Previous" />
+                </StackPanel>
+            </Button>
 
             <StackPanel Grid.Column="2" VerticalAlignment="Center" Spacing="2">
                 <TextBlock Text="{Binding ErrorMessage}"
@@ -217,9 +290,15 @@
                            IsVisible="{Binding StatusMessage, Converter={StaticResource NotNull}}" />
             </StackPanel>
 
-            <Button Grid.Column="4" Content="Next" MinWidth="96"
+            <Button Grid.Column="4" Classes="iconText" MinWidth="96"
                     HorizontalContentAlignment="Center"
-                    Command="{Binding NextPageCommand}" />
+                    AutomationProperties.Name="Next"
+                    Command="{Binding NextPageCommand}">
+                <StackPanel>
+                    <TextBlock Text="Next" />
+                    <Path Data="{StaticResource IconChevronRight}" />
+                </StackPanel>
+            </Button>
         </Grid>
 
         <Border Classes="card" Padding="0">
