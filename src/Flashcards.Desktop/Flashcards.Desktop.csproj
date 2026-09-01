@@ -6,6 +6,20 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <RootNamespace>Flashcards.Desktop</RootNamespace>
+
+    <!--
+      What Explorer, the taskbar and the exe's Details tab show. The identity properties
+      (Product, Company, Version) are shared in Directory.Build.props; only the things specific
+      to the shipped application live here.
+
+      ApplicationIcon is compiled into the exe as a Win32 resource — that is the icon on the file
+      itself. The window's own icon is a separate thing, set on MainWindow from the PNG beside it,
+      because Avalonia decodes window icons through Skia and PNG is the format it is certain to
+      read on every platform.
+    -->
+    <AssemblyTitle>Flashcards</AssemblyTitle>
+    <Description>A local-first flashcards app: write cards, file them under subjects, study them.</Description>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>

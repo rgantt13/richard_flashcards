@@ -42,13 +42,13 @@
                 </StackPanel>
             </Border>
 
-            <TextBlock Text="ANSWERS — tick the ring to mark one correct, drop an image on any tile"
+            <TextBlock Text="ANSWERS — tick Correct to mark one, drop an image on any tile, ✕ to remove one"
                        Classes="muted" Margin="2,0,0,8" TextWrapping="Wrap" />
 
             <!--
-                Exactly four tiles, always. An empty tile is a placeholder on the
-                board and is dropped at save time, so the learner never sees a
-                blank option.
+                As many tiles as the card has answers, between two and eight. A new
+                card starts with four; removing the ones you do not need is what
+                makes a two-option true/false card without leaving blanks behind.
             -->
             <ItemsControl ItemsSource="{Binding Choices}">
                 <ItemsControl.ItemsPanel>
@@ -115,11 +115,18 @@
                                               FontSize="11"
                                               IsChecked="{Binding IsCorrect, Mode=TwoWay}" />
 
+                                    <!--
+                                        Removes the answer outright rather than blanking it.
+                                        Disabled at two options, which is the floor — the view
+                                        model owns that rule so the button is simply unavailable
+                                        instead of the save being refused later.
+                                    -->
                                     <Button Grid.Column="3"
                                             Classes="handle"
                                             Content="✕"
-                                            ToolTip.Tip="Empty this slot"
-                                            Command="{Binding $parent[UserControl].((vm:CardEditorViewModel)DataContext).ClearChoiceCommand}"
+                                            ToolTip.Tip="Remove this answer"
+                                            IsEnabled="{Binding $parent[UserControl].((vm:CardEditorViewModel)DataContext).CanRemoveChoice}"
+                                            Command="{Binding $parent[UserControl].((vm:CardEditorViewModel)DataContext).RemoveChoiceCommand}"
                                             CommandParameter="{Binding}" />
                                 </Grid>
 
@@ -141,6 +148,21 @@
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
+
+            <!--
+                Adding sits under the grid rather than on it, so it reads as "one more of these"
+                and stays put as the grid grows. Matches the "+ text" / "+ image" buttons the
+                question sheet uses above.
+            -->
+            <StackPanel Orientation="Horizontal" Spacing="8" Margin="2,10,0,0">
+                <Button Classes="addElement" Content="+ answer"
+                        IsEnabled="{Binding CanAddChoice}"
+                        Command="{Binding AddChoiceCommand}" />
+
+                <TextBlock Classes="muted" FontSize="11" VerticalAlignment="Center"
+                           IsVisible="{Binding !CanAddChoice}"
+                           Text="That is the most a card can hold." />
+            </StackPanel>
 
         </StackPanel>
 

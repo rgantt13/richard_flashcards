@@ -1,5 +1,21 @@
 <Project>
 
+  <!--
+    Who built this and which build it is. Bump <Version> to cut a release; the other two follow
+    it automatically. AssemblyVersion is deliberately left to default to the same value — an
+    updater keys off it, and having it drift from the version people can see would make a bug
+    report impossible to place.
+  -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <Product>Flashcards</Product>
+    <Authors>Richard Gantt</Authors>
+    <Company>Richard Gantt</Company>
+    <Copyright>Copyright © 2026 Richard Gantt</Copyright>
+    <RepositoryUrl>https://github.com/rgantt13/richard_flashcards</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+
   <!-- Applies to every project in the repo. One place to change the TFM. -->
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>

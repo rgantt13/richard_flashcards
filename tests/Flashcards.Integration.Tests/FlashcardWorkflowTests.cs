@@ -1,3 +1,4 @@
+using Flashcards.Application.Abstractions.Messaging;
 using Flashcards.Application.Cards.Commands;
 using Flashcards.Application.Cards.Queries;
 using Flashcards.Application.Contracts;
@@ -798,4 +799,62 @@ public sealed class FlashcardWorkflowTests
 
     private static Task<PagedResult<FlashcardSummary>> Search(TestHost host, string text)
         => host.Dispatcher.QueryAsync(new SearchFlashcardsQuery(new FlashcardSearchCriteria { Text = text }));
+
+    /// <summary>
+    /// A two-option card — true/false — survives the round trip with exactly two options.
+    /// <para>
+    /// The designer used to lay out four fixed slots and drop the blanks on the way out, so a
+    /// true/false card was two answers and two placeholders to keep stepping over. Now the slots
+    /// are added and removed, and this pins the half of that which reaches storage: two in, two
+    /// out, in order, with the right one still marked.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public async Task A_two_option_card_round_trips_with_exactly_two_options()
+    {
+        await using var host = await TestHost.CreateAsync();
+
+        var id = await host.Dispatcher.SendAsync(new SaveFlashcardCommand
+        {
+            SubjectNames = ["Logic"],
+            Name = "SQLite enforces foreign keys by default",
+            CardType = CardType.MultipleChoice,
+            Blocks = [Text(CardFace.Question, 0, "True or false?")],
+            Choices =
+            [
+                new ChoiceDto(Guid.Empty, 0, "True", false),
+                new ChoiceDto(Guid.Empty, 1, "False", true),
+            ],
+        });
+
+        var detail = await host.Dispatcher.QueryAsync(new GetFlashcardDetailQuery(id));
+
+        detail.ShouldNotBeNull();
+        detail!.Choices.Count.ShouldBe(2);
+        detail.Choices.Select(c => c.Text).ShouldBe(["True", "False"]);
+        detail.Choices.Single(c => c.IsCorrect).Text.ShouldBe("False");
+    }
+
+    /// <summary>
+    /// One option is refused. This is the rule the designer's remove button stops short of, so it
+    /// is worth pinning that the domain would refuse it anyway if anything ever got past the UI.
+    /// </summary>
+    [Fact]
+    public async Task A_card_with_a_single_option_is_refused()
+    {
+        await using var host = await TestHost.CreateAsync();
+
+        var save = new SaveFlashcardCommand
+        {
+            SubjectNames = ["Logic"],
+            Name = "Only one way to answer",
+            CardType = CardType.MultipleChoice,
+            Blocks = [Text(CardFace.Question, 0, "Pick one.")],
+            Choices = [new ChoiceDto(Guid.Empty, 0, "The only option", true)],
+        };
+
+        var failure = await Should.ThrowAsync<ValidationException>(() => host.Dispatcher.SendAsync(save));
+
+        failure.Errors.ShouldContain(e => e.Contains("at least two options"));
+    }
 }

@@ -36,10 +36,20 @@ namespace Flashcards.Desktop.ViewModels.Design;
 /// </summary>
 public sealed partial class CardEditorViewModel : ViewModelBase
 {
-    /// <summary>Multiple choice is deliberately capped — four slots is what the artboard lays out.</summary>
-    public const int ChoiceSlots = 4;
+    /// <summary>What a fresh multiple-choice card starts with. Slots can be added and removed after.</summary>
+    public const int DefaultChoiceSlots = 4;
 
-    private static readonly string[] SlotLabels = ["A", "B", "C", "D"];
+    /// <summary>
+    /// The fewest answers a card may carry. Below two there is nothing to choose between, which is
+    /// the same rule <c>FlashcardRules</c> enforces on the way to the database — this is that rule
+    /// stated early, so the button is simply unavailable rather than the save being refused.
+    /// </summary>
+    public const int MinChoiceSlots = 2;
+
+    /// <summary>Straight from the aggregate, so the board can never build a card it cannot store.</summary>
+    public const int MaxChoiceSlots = Flashcard.MaxChoices;
+
+    private static readonly string[] SlotLabels = ["A", "B", "C", "D", "E", "F", "G", "H"];
 
     private readonly IDispatcher _dispatcher;
     private readonly IImageCache _imageCache;
@@ -527,13 +537,19 @@ public sealed partial class CardEditorViewModel : ViewModelBase
         switch (CardType)
         {
             case CardType.MultipleChoice:
-                // Exactly four slots on the board, however many are filled in.
-                while (Choices.Count < ChoiceSlots)
+                // A fresh board is laid out with the usual four. A card being loaded keeps however
+                // many it was saved with — opening a true/false card must not quietly pad it back
+                // out to four and leave the author two blanks to tidy up again.
+                var slots = Choices.Count == 0
+                    ? DefaultChoiceSlots
+                    : Math.Clamp(Choices.Count, MinChoiceSlots, MaxChoiceSlots);
+
+                while (Choices.Count < slots)
                 {
                     Choices.Add(new ChoiceEditorViewModel());
                 }
 
-                while (Choices.Count > ChoiceSlots)
+                while (Choices.Count > slots)
                 {
                     Choices.RemoveAt(Choices.Count - 1);
                 }
@@ -1223,19 +1239,55 @@ public sealed partial class CardEditorViewModel : ViewModelBase
         }
     }
 
+    /// <summary>Whether there is room for another answer. Drives the "add" button.</summary>
+    public bool CanAddChoice => Choices.Count < MaxChoiceSlots;
+
+    /// <summary>
+    /// Whether an answer can be taken away. False at two, which is the floor: a question with one
+    /// option left is not a question.
+    /// </summary>
+    public bool CanRemoveChoice => Choices.Count > MinChoiceSlots;
+
+    /// <summary>
+    /// Adds an empty answer slot. Selected on the way in, so the caret is already where you would
+    /// type — adding one and then having to click it would be two gestures for one intention.
+    /// </summary>
     [RelayCommand]
-    private void ClearChoice(ChoiceEditorViewModel? choice)
+    private void AddChoice()
     {
-        if (choice is null)
+        if (!CanAddChoice)
         {
             return;
         }
 
-        choice.Text = string.Empty;
-        choice.MediaId = null;
-        choice.AltText = null;
-        choice.IsCorrect = false;
+        var added = new ChoiceEditorViewModel();
+        Choices.Add(added);
+        Select(added);
+    }
 
+    /// <summary>
+    /// Takes an answer off the board entirely.
+    /// <para>
+    /// This replaced a button that only emptied the slot. With a fixed four slots that was the
+    /// most you could do; now that the count is yours to choose, emptying one is just leaving a
+    /// blank where an answer should be — which is the thing this is here to stop.
+    /// </para>
+    /// </summary>
+    [RelayCommand]
+    private void RemoveChoice(ChoiceEditorViewModel? choice)
+    {
+        if (choice is null || !CanRemoveChoice || !Choices.Remove(choice))
+        {
+            return;
+        }
+
+        // The inspector-less board keeps selection on a slot; the removed one cannot hold it.
+        if (ReferenceEquals(SelectedChoice, choice))
+        {
+            SelectedChoice = null;
+        }
+
+        // Removing the only right answer would leave a card that cannot be answered correctly.
         if (!Choices.Any(c => c.IsCorrect))
         {
             Choices[0].IsCorrect = true;
@@ -1432,6 +1484,15 @@ public sealed partial class CardEditorViewModel : ViewModelBase
         }
 
         RelabelChoices();
+
+        // The letters shift when a slot goes, and both buttons live on the count.
+        OnPropertyChanged(nameof(CanAddChoice));
+        OnPropertyChanged(nameof(CanRemoveChoice));
+
+        // Adding or removing an answer is an edit like any other. Without this, changing the
+        // number of options would leave the draft looking untouched and the discard prompt
+        // would not appear when it should.
+        RaiseDraftChanged();
     }
 
     private void OnBlockPropertyChanged(object? sender, PropertyChangedEventArgs e)

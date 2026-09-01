@@ -4,6 +4,7 @@
         x:Class="Flashcards.Desktop.Views.Shell.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Title="Flashcards"
+        Icon="/Assets/app.png"
         Width="1320" Height="880"
         MinWidth="1040" MinHeight="680"
         WindowStartupLocation="CenterScreen">
