@@ -64,7 +64,7 @@
                            IsVisible="{Binding ErrorMessage, Converter={StaticResource NotNull}}" />
                 <TextBlock Classes="muted" HorizontalAlignment="Center"
                            IsVisible="{Binding ShowsPickers}"
-                           Text="{Binding Browser.SelectionSummary, StringFormat='{}{0} — none ticked means all'}" />
+                           Text="{Binding Browser.SelectionSummary}" />
             </StackPanel>
 
             <Button Grid.Column="4" Classes="Primary" MinWidth="150" Height="42"

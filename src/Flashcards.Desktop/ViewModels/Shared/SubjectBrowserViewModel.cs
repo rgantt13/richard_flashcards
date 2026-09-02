@@ -77,18 +77,8 @@ public sealed partial class SubjectBrowserViewModel(IDispatcher dispatcher) : Ob
 
     public bool HasSubjectSelection => SelectedSubjectCount > 0;
 
-    /// <summary>Cards ticked, or the whole filtered list when none are.</summary>
-    public IReadOnlyList<CardPickViewModel> Selection
-    {
-        get
-        {
-            var ticked = CardPicks.Where(c => c.IsIncluded).ToList();
-
-            // Ticking nothing means "all of them" rather than "none of them": having chosen the
-            // subjects, the obvious next step is to study what is in them.
-            return ticked.Count > 0 ? ticked : [.. CardPicks];
-        }
-    }
+    /// <summary>The cards that are ticked. Nothing ticked means nothing to study.</summary>
+    public IReadOnlyList<CardPickViewModel> Selection => [.. CardPicks.Where(c => c.IsIncluded)];
 
     public int SelectedCardCount => Selection.Count;
 
@@ -111,7 +101,7 @@ public sealed partial class SubjectBrowserViewModel(IDispatcher dispatcher) : Ob
     public string CardListLabel => ShowsCardSelection ? "IN THIS SESSION" : "CARDS";
 
     public string CardListHint => ShowsCardSelection
-        ? $"{SelectionSummary} — none ticked means all"
+        ? SelectionSummary
         : CardPicks.Count == 1 ? "1 card" : $"{CardPicks.Count} cards";
 
     partial void OnShowsCardSelectionChanged(bool value)
@@ -175,12 +165,11 @@ public sealed partial class SubjectBrowserViewModel(IDispatcher dispatcher) : Ob
 
     /// <summary>
     /// Fills the card tier from whatever subjects are ticked, so the cards on offer are always a
-    /// subset of what the tier above is reporting on.
+    /// subset of what the tier above is reporting on — every one of them ticked.
     /// </summary>
     public async Task LoadCardsForSelectionAsync()
     {
         var subjectIds = IncludedSubjects.Select(s => s.Id).ToArray();
-        var ticked = CardPicks.Where(c => c.IsIncluded).Select(c => c.Id).ToHashSet();
         var focused = FocusedCard?.Id;
 
         foreach (var stale in CardPicks)
@@ -202,7 +191,10 @@ public sealed partial class SubjectBrowserViewModel(IDispatcher dispatcher) : Ob
 
             foreach (var card in results.Items)
             {
-                var pick = new CardPickViewModel(card) { IsIncluded = ticked.Contains(card.Id) };
+                // Every card in the chosen subjects starts ticked. Changing the subjects is the
+                // coarse choice and this is the fine one, so the fine one begins by agreeing with
+                // it — untick what you do not want rather than build the list up from nothing.
+                var pick = new CardPickViewModel(card) { IsIncluded = true };
                 pick.PropertyChanged += OnCardPickChanged;
                 CardPicks.Add(pick);
             }

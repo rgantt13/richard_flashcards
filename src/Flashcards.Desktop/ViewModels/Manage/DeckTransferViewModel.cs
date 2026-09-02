@@ -23,8 +23,8 @@ public enum TransferDirection
 /// <para>
 /// Two tiers, subjects then cards, the same arrangement the Study panel uses to assemble a custom
 /// session — because it is the same question. The tiers are linked the same way too: ticking
-/// subjects decides which cards are on offer below, and ticking no cards means all of the ones
-/// showing rather than none of them.
+/// subjects decides which cards are on offer below, and every card that appears there arrives
+/// ticked — untick what you do not want.
 /// </para>
 /// <para>
 /// This view model only <em>picks</em>. It never reads or writes a file and never runs the import:
@@ -73,16 +73,8 @@ public sealed partial class DeckTransferViewModel(IDispatcher dispatcher) : View
 
     private IEnumerable<TransferSubjectViewModel> IncludedSubjects => SubjectPicks.Where(s => s.IsIncluded);
 
-    /// <summary>Ticked cards, or every card on offer when none are — the Study panel's rule.</summary>
-    private IReadOnlyList<TransferCardViewModel> Selection
-    {
-        get
-        {
-            var ticked = CardPicks.Where(c => c.IsIncluded).ToList();
-
-            return ticked.Count > 0 ? ticked : [.. CardPicks];
-        }
-    }
+    /// <summary>The cards that are ticked, and only those — the Study panel's rule.</summary>
+    private IReadOnlyList<TransferCardViewModel> Selection => [.. CardPicks.Where(c => c.IsIncluded)];
 
     public IReadOnlyCollection<Guid> SelectedSubjectIds => [.. IncludedSubjects.Select(s => s.Id).OfType<Guid>()];
 
@@ -263,11 +255,13 @@ public sealed partial class DeckTransferViewModel(IDispatcher dispatcher) : View
     /// Refills the card tier from whatever subjects are ticked, so what is on offer below is
     /// always a subset of what is chosen above. On the way out that is a search; on the way in it
     /// is a filter over the cards the file already handed us.
+    /// <para>
+    /// Everything it offers starts ticked, and changing the subjects re-ticks the lot: the subject
+    /// tier is the coarse choice and this is the fine one, so the fine one begins by agreeing.
+    /// </para>
     /// </summary>
     private async Task LoadCardsForSelectionAsync()
     {
-        var ticked = CardPicks.Where(c => c.IsIncluded).Select(c => c.Id).ToHashSet();
-
         foreach (var stale in CardPicks)
         {
             stale.PropertyChanged -= OnCardPickChanged;
@@ -277,7 +271,7 @@ public sealed partial class DeckTransferViewModel(IDispatcher dispatcher) : View
 
         foreach (var card in await CardsInScopeAsync())
         {
-            card.IsIncluded = ticked.Contains(card.Id);
+            card.IsIncluded = true;
             card.PropertyChanged += OnCardPickChanged;
             CardPicks.Add(card);
         }

@@ -175,7 +175,7 @@
                         <StackPanel Grid.Column="0" Spacing="1">
                             <TextBlock Text="CARDS" Classes="tierLabel" />
                             <TextBlock Classes="muted" FontSize="11" TextTrimming="CharacterEllipsis"
-                                       Text="{Binding CardSummary, StringFormat='{}{0} — none ticked means all'}" />
+                                       Text="{Binding CardSummary}" />
                         </StackPanel>
 
                         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
