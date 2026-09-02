@@ -1,0 +1,139 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:Flashcards.Desktop.ViewModels.Statistics"
+             xmlns:shared="clr-namespace:Flashcards.Desktop.Views.Shared"
+             xmlns:ctrl="clr-namespace:Flashcards.Desktop.Controls.Shared"
+             x:DataType="vm:StatisticsViewModel"
+             x:Class="Flashcards.Desktop.Views.Statistics.StatisticsView">
+
+    <!--
+        How you are doing. Four tiers, widest first: the library, the subjects that stand out, one
+        subject at a time, then one card at a time.
+
+        There is deliberately no way to start studying from here. Mixing "look at your record" with
+        "begin a sitting" is what left the old study screen carrying two jobs, and neither of them
+        well. The three familiar tiers are the same controls the Custom prep screen uses, handed
+        the same view model with its card tick boxes switched off.
+    -->
+
+    <UserControl.Styles>
+        <StyleInclude Source="avares://Flashcards.Desktop/Views/Shared/StatCardStyles.axaml" />
+
+        <!-- One highlight: who leads, by how much, and on what evidence. -->
+        <Style Selector="Border.highlight">
+            <Setter Property="Background" Value="{DynamicResource SemiColorFill0}" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="14,12" />
+        </Style>
+
+        <Style Selector="TextBlock.highlightWhat">
+            <Setter Property="FontSize" Value="10" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Opacity" Value="0.5" />
+        </Style>
+
+        <Style Selector="TextBlock.highlightWho">
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+        </Style>
+
+        <Style Selector="TextBlock.highlightFigure">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Opacity" Value="0.8" />
+        </Style>
+
+        <Style Selector="TextBlock.highlightDetail">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Opacity" Value="0.45" />
+        </Style>
+    </UserControl.Styles>
+
+    <DockPanel Margin="28,24">
+
+        <StackPanel DockPanel.Dock="Top" Spacing="3" Margin="0,0,0,14">
+            <TextBlock Text="Statistics" Classes="h1" />
+            <TextBlock Text="Your record, across the whole library and down to a single card." Classes="muted" />
+        </StackPanel>
+
+        <TextBlock DockPanel.Dock="Bottom" Margin="0,12,0,0"
+                   Foreground="{DynamicResource SemiColorDanger}"
+                   TextWrapping="Wrap"
+                   Text="{Binding ErrorMessage}"
+                   IsVisible="{Binding ErrorMessage, Converter={StaticResource NotNull}}" />
+
+        <ScrollViewer>
+            <StackPanel Spacing="14">
+
+                <!-- tier 0: the whole library -->
+                <shared:OverallStatsCard DataContext="{Binding Browser}" />
+
+                <!--
+                    tier 0.5: the subjects that stand out.
+
+                    Deliberately not the same figures as the subject tier below. That one answers
+                    "how am I doing on this subject"; this one answers "which subject should I be
+                    thinking about at all", which no amount of scrolling a list will tell you.
+                -->
+                <Border Classes="card" Padding="18,16">
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="SUBJECTS THAT STAND OUT" Classes="statLabel" />
+
+                        <TextBlock Classes="muted" TextWrapping="Wrap"
+                                   Text="Nothing to compare yet. Answer a few cards and the leaders will appear here."
+                                   IsVisible="{Binding !Highlights.HasAnything}" />
+
+                        <UniformGrid Columns="4" IsVisible="{Binding Highlights.HasAnything}">
+
+                            <Border Classes="highlight" Margin="0,0,10,0">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="BIGGEST SUBJECT" Classes="highlightWhat" />
+                                    <TextBlock Text="{Binding Highlights.MostCards.Name}" Classes="highlightWho" />
+                                    <TextBlock Text="{Binding Highlights.MostCards.Figure}" Classes="highlightFigure" />
+                                    <TextBlock Text="{Binding Highlights.MostCards.Detail}" Classes="highlightDetail" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Classes="highlight" Margin="0,0,10,0">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="MOST PRACTISED" Classes="highlightWhat" />
+                                    <TextBlock Text="{Binding Highlights.MostAnswered.Name}" Classes="highlightWho" />
+                                    <TextBlock Text="{Binding Highlights.MostAnswered.Figure}" Classes="highlightFigure" />
+                                    <TextBlock Text="{Binding Highlights.MostAnswered.Detail}" Classes="highlightDetail" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Classes="highlight" Margin="0,0,10,0">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="STRONGEST" Classes="highlightWhat" />
+                                    <TextBlock Text="{Binding Highlights.BestAccuracy.Name}" Classes="highlightWho"
+                                               Foreground="{DynamicResource SemiColorSuccess}" />
+                                    <TextBlock Text="{Binding Highlights.BestAccuracy.Figure}" Classes="highlightFigure" />
+                                    <TextBlock Text="{Binding Highlights.BestAccuracy.Detail}" Classes="highlightDetail" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Classes="highlight">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="NEEDS THE MOST WORK" Classes="highlightWhat" />
+                                    <TextBlock Text="{Binding Highlights.NeedsWork.Name}" Classes="highlightWho"
+                                               Foreground="{DynamicResource SemiColorDanger}" />
+                                    <TextBlock Text="{Binding Highlights.NeedsWork.Figure}" Classes="highlightFigure" />
+                                    <TextBlock Text="{Binding Highlights.NeedsWork.Detail}" Classes="highlightDetail" />
+                                </StackPanel>
+                            </Border>
+                        </UniformGrid>
+
+                        <TextBlock Classes="muted" FontSize="11" TextWrapping="Wrap"
+                                   IsVisible="{Binding Highlights.HasAnything}"
+                                   Text="Strongest and weakest only count subjects with at least five answers behind them — below that an accuracy is a coin toss." />
+                    </StackPanel>
+                </Border>
+
+                <!-- tiers 1 and 2, at a fixed height so the page scrolls as a whole -->
+                <shared:SubjectStatsCard Height="330" DataContext="{Binding Browser}" />
+                <shared:CardStatsCard    Height="330" DataContext="{Binding Browser}" />
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+</UserControl>

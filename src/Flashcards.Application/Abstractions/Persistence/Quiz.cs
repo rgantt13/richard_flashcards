@@ -1,3 +1,5 @@
+using Flashcards.Application.Contracts;
+
 namespace Flashcards.Application.Abstractions.Persistence;
 
 /// <summary>
@@ -19,10 +21,5 @@ public interface IQuizReadStore
     /// wins, then <paramref name="subjectIds"/>, and with neither the whole library is eligible.
     /// </para>
     /// </summary>
-    Task<IReadOnlyList<Guid>> GetQuizQueueAsync(
-        IReadOnlyCollection<Guid> subjectIds,
-        IReadOnlyCollection<Guid> cardIds,
-        int maxCards,
-        bool hardestFirst,
-        CancellationToken cancellationToken);
+    Task<IReadOnlyList<Guid>> GetQuizQueueAsync(QuizOptions options, CancellationToken cancellationToken);
 }

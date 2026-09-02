@@ -1,0 +1,66 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:Flashcards.Desktop.ViewModels.Shared"
+             xmlns:contracts="clr-namespace:Flashcards.Application.Contracts;assembly=Flashcards.Application"
+             xmlns:ctrl="clr-namespace:Flashcards.Desktop.Controls.Shared"
+             xmlns:subj="clr-namespace:Flashcards.Desktop.Controls.Subjects"
+             x:DataType="vm:SubjectBrowserViewModel"
+             x:Class="Flashcards.Desktop.Views.Shared.OverallStatsCard">
+
+    <!-- The whole library at a glance. Tier zero on both the Study prep and Statistics panels. -->
+
+    <UserControl.Styles>
+        <StyleInclude Source="avares://Flashcards.Desktop/Views/Shared/StatCardStyles.axaml" />
+    </UserControl.Styles>
+
+        <Border Classes="card" Padding="22,18">
+            <Grid ColumnDefinitions="Auto,28,*,28,Auto">
+
+                <StackPanel Grid.Column="0" Spacing="0">
+                    <TextBlock Text="{Binding Overall.Practice.Accuracy, StringFormat='{}{0:P0}'}"
+                               FontSize="46" FontWeight="Bold" />
+                    <TextBlock Text="answered correctly" Classes="muted" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="2" Spacing="10" VerticalAlignment="Center">
+                    <ctrl:AccuracyBar Classes="thick"
+                                      Correct="{Binding Overall.Practice.Correct}"
+                                      Wrong="{Binding Overall.Practice.Wrong}" />
+
+                    <UniformGrid Columns="3">
+                        <StackPanel Classes="figure" Spacing="1">
+                            <TextBlock Text="{Binding Overall.Practice.Answered}" />
+                            <TextBlock Text="answered" />
+                        </StackPanel>
+                        <StackPanel Classes="figure" Spacing="1">
+                            <TextBlock Text="{Binding Overall.Practice.Correct}"
+                                       Foreground="{DynamicResource SemiColorSuccess}" />
+                            <TextBlock Text="right" />
+                        </StackPanel>
+                        <StackPanel Classes="figure" Spacing="1">
+                            <TextBlock Text="{Binding Overall.Practice.Wrong}"
+                                       Foreground="{DynamicResource SemiColorDanger}" />
+                            <TextBlock Text="wrong" />
+                        </StackPanel>
+                    </UniformGrid>
+                </StackPanel>
+
+                <StackPanel Grid.Column="4" Spacing="10" VerticalAlignment="Center">
+                    <UniformGrid Columns="3">
+                        <StackPanel Classes="figure" Spacing="1" Margin="0,0,18,0">
+                            <TextBlock Text="{Binding Overall.TotalCards}" />
+                            <TextBlock Text="cards" />
+                        </StackPanel>
+                        <StackPanel Classes="figure" Spacing="1" Margin="0,0,18,0">
+                            <TextBlock Text="{Binding Overall.SubjectCount}" />
+                            <TextBlock Text="subjects" />
+                        </StackPanel>
+                        <StackPanel Classes="figure" Spacing="1">
+                            <TextBlock Text="{Binding Overall.CardsUntouched}" />
+                            <TextBlock Text="untouched" />
+                        </StackPanel>
+                    </UniformGrid>
+                </StackPanel>
+            </Grid>
+        </Border>
+</UserControl>

@@ -8,19 +8,20 @@
              x:Name="Root">
 
     <!--
-        The Study panel, which is three screens rather than one.
+        The Study panel, which is four screens rather than one.
 
         This file is only the switchboard: each stage lives in its own view, and the one on show is
         chosen by the view model's stage flags. They are stacked in a Grid rather than swapped into
         a ContentControl because exactly one is ever visible, and stacking keeps the choice
         declarative — you can read which screen appears when without following any code.
 
-        All three bind to the same QuizViewModel and inherit it as their DataContext, which is why
+        All four bind to the same QuizViewModel and inherit it as their DataContext, which is why
         each declares x:DataType="vm:QuizViewModel" of its own: compiled bindings are checked
         against the type a file *declares*, not the one it happens to receive at runtime.
     -->
     <Grid>
-        <setup:QuizSetupView    IsVisible="{Binding IsSetup}" />
+        <setup:StudyModeView    IsVisible="{Binding IsChoosingMode}" />
+        <setup:StudyPrepView    IsVisible="{Binding IsPreparing}" />
         <views:QuizSessionView  IsVisible="{Binding IsStudying}" />
         <views:QuizFinishedView IsVisible="{Binding IsFinished}" />
     </Grid>

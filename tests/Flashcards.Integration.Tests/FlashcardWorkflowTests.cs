@@ -649,7 +649,7 @@ public sealed class FlashcardWorkflowTests
         await host.Dispatcher.SendAsync(new RecordAnswerCommand(weak, false, TimeSpan.FromSeconds(1)));
 
         var session = await host.Dispatcher.QueryAsync(new StartQuizSessionQuery(
-            new QuizOptions { SubjectIds = [subjectId], HardestFirst = true }));
+            new QuizOptions { SubjectIds = [subjectId], Draw = QuizDraw.HardestFirst }));
 
         session.CardIds[0].ShouldBe(weak);
     }
@@ -856,5 +856,110 @@ public sealed class FlashcardWorkflowTests
         var failure = await Should.ThrowAsync<ValidationException>(() => host.Dispatcher.SendAsync(save));
 
         failure.Errors.ShouldContain(e => e.Contains("at least two options"));
+    }
+
+    /// <summary>
+    /// The Fresh cards draw offers only cards nobody has answered yet.
+    /// <para>
+    /// Distinct from Suggested, which leads with untouched cards but mixes weak ones in behind
+    /// them. This one is the clean pass over what you have just written.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public async Task The_untouched_draw_offers_only_cards_never_answered()
+    {
+        await using var host = await TestHost.CreateAsync();
+
+        var answered = await CreateCardAsync(host, "Logic", "Already seen");
+        await CreateCardAsync(host, "Logic", "Never seen");
+
+        await host.Dispatcher.SendAsync(new RecordAnswerCommand(answered, true, TimeSpan.FromSeconds(3)));
+
+        var queue = await host.Dispatcher.QueryAsync(new StartQuizSessionQuery(
+            new QuizOptions { Draw = QuizDraw.Untouched, MaxCards = 50 }));
+
+        var names = await NamesOfAsync(host, queue.CardIds);
+        names.ShouldBe(["Never seen"]);
+    }
+
+    /// <summary>
+    /// Recently missed keys off a card's <em>latest</em> answer, not its lifetime record — so a
+    /// card with a bad history that you have since got right drops out, and one you have usually
+    /// known but just fluffed comes back.
+    /// </summary>
+    [Fact]
+    public async Task The_recently_missed_draw_follows_the_latest_answer_not_the_average()
+    {
+        await using var host = await TestHost.CreateAsync();
+
+        var redeemed = await CreateCardAsync(host, "Logic", "Wrong twice then right");
+        var slipped = await CreateCardAsync(host, "Logic", "Right twice then wrong");
+        await CreateCardAsync(host, "Logic", "Never answered");
+
+        // A poor lifetime record, but the most recent answer was correct.
+        await host.Dispatcher.SendAsync(new RecordAnswerCommand(redeemed, false, TimeSpan.FromSeconds(1)));
+        await host.Dispatcher.SendAsync(new RecordAnswerCommand(redeemed, false, TimeSpan.FromSeconds(1)));
+        await host.Dispatcher.SendAsync(new RecordAnswerCommand(redeemed, true, TimeSpan.FromSeconds(1)));
+
+        // A good record, spoiled by the latest answer.
+        await host.Dispatcher.SendAsync(new RecordAnswerCommand(slipped, true, TimeSpan.FromSeconds(1)));
+        await host.Dispatcher.SendAsync(new RecordAnswerCommand(slipped, true, TimeSpan.FromSeconds(1)));
+        await host.Dispatcher.SendAsync(new RecordAnswerCommand(slipped, false, TimeSpan.FromSeconds(1)));
+
+        var queue = await host.Dispatcher.QueryAsync(new StartQuizSessionQuery(
+            new QuizOptions { Draw = QuizDraw.RecentlyMissed, MaxCards = 50 }));
+
+        var names = await NamesOfAsync(host, queue.CardIds);
+
+        // Hardest-first would have led with the card that has lost twice; this one does not.
+        names.ShouldBe(["Right twice then wrong"]);
+    }
+
+    /// <summary>
+    /// The auto-graded filter keeps a timed drill to card types the app can mark, so nothing in
+    /// the queue needs the learner to grade themselves against the clock.
+    /// </summary>
+    [Fact]
+    public async Task The_auto_graded_filter_leaves_out_self_graded_card_types()
+    {
+        await using var host = await TestHost.CreateAsync();
+
+        await CreateCardAsync(host, "Logic", "A standard card");
+
+        await host.Dispatcher.SendAsync(new SaveFlashcardCommand
+        {
+            SubjectNames = ["Logic"],
+            Name = "A multiple-choice card",
+            CardType = CardType.MultipleChoice,
+            Blocks = [Text(CardFace.Question, 0, "Pick one")],
+            Choices =
+            [
+                new ChoiceDto(Guid.Empty, 0, "Right", true),
+                new ChoiceDto(Guid.Empty, 1, "Wrong", false),
+            ],
+        });
+
+        var queue = await host.Dispatcher.QueryAsync(new StartQuizSessionQuery(
+            new QuizOptions { AutoGradedOnly = true, MaxCards = 50 }));
+
+        var names = await NamesOfAsync(host, queue.CardIds);
+        names.ShouldBe(["A multiple-choice card"]);
+    }
+
+    private static async Task<IReadOnlyList<string>> NamesOfAsync(TestHost host, IReadOnlyList<Guid> ids)
+    {
+        var names = new List<string>();
+
+        foreach (var id in ids)
+        {
+            var detail = await host.Dispatcher.QueryAsync(new GetFlashcardDetailQuery(id));
+
+            if (detail is not null)
+            {
+                names.Add(detail.Name);
+            }
+        }
+
+        return names;
     }
 }
