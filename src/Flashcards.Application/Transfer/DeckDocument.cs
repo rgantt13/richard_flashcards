@@ -57,15 +57,35 @@ public sealed record DeckSubject(string Name, string? Parent, string? ColorHex, 
 /// them on the far side is both correct and the only way a re-filed subject stays honest.
 /// </para>
 /// </summary>
-public sealed record DeckCard(
-    Guid Id,
-    string Name,
-    CardType CardType,
-    string? Notes,
-    bool IsSuspended,
-    IReadOnlyList<string> Subjects,
-    IReadOnlyList<ContentBlockDto> Blocks,
-    IReadOnlyList<ChoiceDto> Choices);
+/// <para>
+/// Every member is optional in the file and defaults to something harmless. Decks are written by
+/// hand and by language models as well as by this app's exporter, and a card that omits
+/// <c>Choices</c> because it is not a multiple-choice card should be reported as a card, not
+/// crash the import on a null reference. A missing name fails validation with a sentence naming
+/// the card; a missing collection is simply empty.
+/// </para>
+public sealed record DeckCard
+{
+    /// <summary>
+    /// Only a hint. Used to recognise a deck exported from this same library and brought back;
+    /// a generated deck can leave it out, or set it to all zeroes.
+    /// </summary>
+    public Guid Id { get; init; }
+
+    public string Name { get; init; } = string.Empty;
+
+    public CardType CardType { get; init; }
+
+    public string? Notes { get; init; }
+
+    public bool IsSuspended { get; init; }
+
+    public IReadOnlyList<string> Subjects { get; init; } = [];
+
+    public IReadOnlyList<ContentBlockDto> Blocks { get; init; } = [];
+
+    public IReadOnlyList<ChoiceDto> Choices { get; init; } = [];
+}
 
 /// <summary>
 /// One image, inline. <paramref name="Id"/> is the id the blocks and choices in this file
@@ -114,7 +134,12 @@ public static class DeckSerializer
         }
         catch (JsonException exception)
         {
-            throw new DeckFormatException("That file is not a flashcards deck — it is not valid JSON.", exception);
+            // The parser's own message is carried through rather than swallowed. It says which
+            // property and which line, and a deck written by hand or by a language model usually
+            // fails on one bad enum name — "not valid JSON" alone would send you looking for a
+            // missing brace that is not there.
+            throw new DeckFormatException(
+                $"That file could not be read as a flashcards deck. {exception.Message}", exception);
         }
 
         if (deck is null)

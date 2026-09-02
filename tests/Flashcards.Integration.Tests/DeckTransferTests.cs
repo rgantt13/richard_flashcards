@@ -313,7 +313,7 @@ public sealed class DeckTransferTests
         var exception = Should.Throw<DeckFormatException>(
             () => DeckSerializer.Read("not json at all"u8.ToArray()));
 
-        exception.Message.ShouldContain("not a flashcards deck");
+        exception.Message.ShouldContain("could not be read as a flashcards deck");
     }
 
     [Fact]

@@ -1,0 +1,123 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:Flashcards.Desktop.ViewModels.Manage"
+        x:Class="Flashcards.Desktop.Views.Manage.GenerateDeckWindow"
+        x:DataType="vm:GenerateDeckViewModel"
+        Title="Generate a deck"
+        Width="820" Height="680"
+        MinWidth="640" MinHeight="520"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False">
+
+    <!--
+        Builds the prompt; you do the pasting.
+
+        The app never calls a model — no key, no network, no account — so this dialog's whole job is
+        to fill in the blanks and put the result on the clipboard. The finished prompt is shown in
+        full rather than hidden behind the button, because you are about to hand it to something
+        else and you should be able to read what you are sending.
+    -->
+
+    <Window.Styles>
+        <Style Selector="TextBlock.fieldLabel">
+            <Setter Property="FontSize" Value="10" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Opacity" Value="0.5" />
+            <Setter Property="Margin" Value="2,0,0,4" />
+        </Style>
+
+        <Style Selector="TextBlock.step">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Opacity" Value="0.6" />
+        </Style>
+    </Window.Styles>
+
+    <DockPanel Margin="20">
+
+        <StackPanel DockPanel.Dock="Top" Spacing="4" Margin="0,0,0,16">
+            <TextBlock Text="Generate a deck" FontSize="17" FontWeight="SemiBold" />
+            <TextBlock Classes="muted" TextWrapping="Wrap"
+                       Text="Fill this in, copy the prompt, and paste it into whichever assistant you use. Nothing leaves your machine from here — the app has no key and makes no network calls." />
+        </StackPanel>
+
+        <!-- ····· what to generate ····· -->
+        <Border DockPanel.Dock="Top" Classes="card" Padding="16,14" Margin="0,0,0,14">
+            <StackPanel Spacing="12">
+
+                <Grid ColumnDefinitions="*,16,190">
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="SUBJECT" Classes="fieldLabel" />
+                        <TextBox Text="{Binding Subject, Mode=TwoWay}"
+                                 Watermark="what the deck is about" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="HOW MANY CARDS" Classes="fieldLabel" />
+                        <Grid ColumnDefinitions="*,10,Auto">
+                            <Slider Grid.Column="0" Minimum="5" Maximum="100" TickFrequency="5"
+                                    IsSnapToTickEnabled="True"
+                                    Value="{Binding CardCount, Mode=TwoWay}" />
+                            <TextBlock Grid.Column="2" Text="{Binding CardCount}"
+                                       VerticalAlignment="Center" FontWeight="SemiBold" Width="30" />
+                        </Grid>
+                    </StackPanel>
+                </Grid>
+
+                <StackPanel>
+                    <TextBlock Text="ANYTHING ELSE (OPTIONAL)" Classes="fieldLabel" />
+                    <TextBox Text="{Binding Focus, Mode=TwoWay}"
+                             Watermark="e.g. assume I know the basics, lean on the syntax" />
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- ····· footer ····· -->
+        <Grid DockPanel.Dock="Bottom" ColumnDefinitions="Auto,16,*,16,Auto" Margin="0,14,0,0">
+            <Button Grid.Column="0" Content="Close" MinWidth="92"
+                    HorizontalContentAlignment="Center"
+                    Command="{Binding CloseCommand}" />
+
+            <StackPanel Grid.Column="2" VerticalAlignment="Center" Spacing="1">
+                <TextBlock Classes="step" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center"
+                           Text="Paste into your assistant · save the reply as a .fcdeck file · Import it from Manage" />
+                <TextBlock Text="{Binding StatusMessage}" Classes="muted" FontSize="11"
+                           HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"
+                           IsVisible="{Binding StatusMessage, Converter={StaticResource NotNull}}" />
+            </StackPanel>
+
+            <Button Grid.Column="4" Classes="Primary" MinWidth="150" Height="40"
+                    HorizontalContentAlignment="Center"
+                    AutomationProperties.Name="Copy prompt"
+                    IsEnabled="{Binding CanCopy}"
+                    Command="{Binding CopyCommand}">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Path Data="{StaticResource IconSparkle}"
+                          Fill="{Binding $parent[Button].Foreground}"
+                          Width="15" Height="15" Stretch="Uniform" VerticalAlignment="Center" />
+                    <TextBlock Text="Copy prompt" FontWeight="SemiBold" VerticalAlignment="Center" />
+                </StackPanel>
+            </Button>
+        </Grid>
+
+        <!-- ····· the prompt itself ····· -->
+        <Border Classes="card" Padding="0">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Top" Text="THE PROMPT" Classes="fieldLabel" Margin="14,12,0,6" />
+
+                <!--
+                    Read-only and selectable rather than a TextBlock: it is long, and being able to
+                    select part of it is occasionally what you want even with a copy button here.
+                -->
+                <TextBox Text="{Binding Prompt, Mode=OneWay}"
+                         IsReadOnly="True"
+                         AcceptsReturn="True"
+                         TextWrapping="NoWrap"
+                         FontFamily="Cascadia Code,Consolas,Menlo,monospace"
+                         FontSize="11"
+                         BorderThickness="0"
+                         Background="Transparent"
+                         Margin="8,0,8,8" />
+            </DockPanel>
+        </Border>
+    </DockPanel>
+</Window>

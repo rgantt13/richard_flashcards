@@ -97,16 +97,28 @@
             rather than about anything in the grid. They live up here for that reason: the footer
             below is paging, and the filter bar is filtering.
 
-            Import on the left and Export on the right, following the convention the rest of the
-            app uses — leftwards brings things in and rightwards sends them on.
+            Read left to right as the life of a deck: Generate makes one, Import brings it in,
+            Export sends it back out. Generate sits here rather than in Design because what it
+            produces is a file, and this is the panel where a file becomes cards.
         -->
-        <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,8,Auto" Margin="0,0,0,14">
+        <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,8,Auto,8,Auto" Margin="0,0,0,14">
             <StackPanel Grid.Column="0" Spacing="2">
                 <TextBlock Text="Manage cards" Classes="h1" />
                 <TextBlock Text="{Binding ResultSummary}" Classes="muted" />
             </StackPanel>
 
-            <Button Grid.Column="1" Classes="iconText" MinWidth="96" VerticalAlignment="Center"
+            <Button Grid.Column="1" Classes="iconText" MinWidth="112" VerticalAlignment="Center"
+                    HorizontalContentAlignment="Center"
+                    AutomationProperties.Name="Generate"
+                    ToolTip.Tip="Build a prompt for making a deck with an AI assistant"
+                    Command="{Binding GenerateDeckCommand}">
+                <StackPanel>
+                    <Path Data="{StaticResource IconSparkle}" />
+                    <TextBlock Text="Generate" />
+                </StackPanel>
+            </Button>
+
+            <Button Grid.Column="3" Classes="iconText" MinWidth="96" VerticalAlignment="Center"
                     HorizontalContentAlignment="Center"
                     AutomationProperties.Name="Import"
                     ToolTip.Tip="Read subjects and cards out of a deck file"
@@ -117,7 +129,7 @@
                 </StackPanel>
             </Button>
 
-            <Button Grid.Column="3" Classes="iconText" MinWidth="96" VerticalAlignment="Center"
+            <Button Grid.Column="5" Classes="iconText" MinWidth="96" VerticalAlignment="Center"
                     HorizontalContentAlignment="Center"
                     AutomationProperties.Name="Export"
                     ToolTip.Tip="Write chosen subjects and cards to a deck file"

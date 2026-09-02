@@ -41,6 +41,12 @@ public interface IDialogService
     /// </para>
     /// </summary>
     Task<bool> TransferDeckAsync(DeckTransferViewModel model);
+
+    /// <summary>
+    /// Opens the prompt builder. Returns nothing: it copies to the clipboard and closes, and what
+    /// happens next happens in whatever assistant the user pastes into.
+    /// </summary>
+    Task GenerateDeckAsync(GenerateDeckViewModel model);
 }
 
 /// <summary>
@@ -84,6 +90,16 @@ public sealed class DialogService : IDialogService
         }
 
         return await new DeckTransferWindow { DataContext = model }.ShowDialog<bool>(owner);
+    }
+
+    public async Task GenerateDeckAsync(GenerateDeckViewModel model)
+    {
+        var owner = (App.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
+
+        if (owner is not null)
+        {
+            await new GenerateDeckWindow { DataContext = model }.ShowDialog(owner);
+        }
     }
 
     public async Task<string?> PromptAsync(string title, string message, string? initialValue = null, string confirmText = "Save")
