@@ -84,6 +84,50 @@
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
 
+        <!--
+            ····· the sort-direction toggle ·····
+
+            It shows the direction you are in, and its colour says which one that is: filled while
+            the newest or highest is on top, outlined when the list runs the other way. A tick box
+            labelled "Descending" made you read the word to know the state; this you can see.
+
+            Every state is set on the template's ContentPresenter rather than on the button. Semi
+            paints the presenter for :pointerover, so a Background set on the button itself loses to
+            it — and the button under the cursor, which is where it always is just after a click,
+            showed no fill at all. It read as a click that did not register.
+        -->
+        <Style Selector="ToggleButton.sortDir">
+            <Setter Property="BorderThickness" Value="1" />
+        </Style>
+
+        <Style Selector="ToggleButton.sortDir /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SemiColorBorder}" />
+            <Setter Property="Foreground" Value="{DynamicResource SemiColorText1}" />
+        </Style>
+
+        <Style Selector="ToggleButton.sortDir:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SemiColorFill0}" />
+        </Style>
+
+        <Style Selector="ToggleButton.sortDir:checked /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SemiColorPrimary}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SemiColorPrimary}" />
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+
+        <!--
+            Hover keeps the same primary, only lighter. Semi has no PrimaryHover key — an
+            unresolved DynamicResource paints nothing, which is how the checked button under the
+            cursor ended up with no fill and no border at all.
+        -->
+        <Style Selector="ToggleButton.sortDir:checked:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SemiColorPrimary}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SemiColorPrimary}" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Opacity" Value="0.88" />
+        </Style>
+
     </UserControl.Styles>
 
     <!--
@@ -153,7 +197,7 @@
             drop lands on exactly one of them, with no question of whether the pointer is over a
             child or over the box that holds it.
         -->
-        <Border DockPanel.Dock="Left" Classes="card" Width="330" Margin="0,0,14,0" Padding="0">
+        <Border DockPanel.Dock="Left" Classes="card" Width="296" Margin="0,0,14,0" Padding="0">
             <DockPanel Margin="14,12">
 
                 <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="0,0,0,8">
@@ -212,65 +256,63 @@
 
         <!-- filter bar -->
         <Border DockPanel.Dock="Top" Classes="card" Margin="0,0,0,14" Padding="16,12">
-            <StackPanel Spacing="10">
+            <!--
+                One row. Suspended and never-answered cards are always in the results now, so the
+                two tick boxes that used to sit under this went with them — a filter you would
+                never sensibly turn on is not a filter, it is a way to lose a card.
 
-                <!--
-                    SEARCH is the only star column, so it absorbs whatever the fixed ones leave —
-                    which at the default window width was 61px, about five characters. The two
-                    drop-downs were sized well above what their longest entry needs ("Multiple
-                    choice", "TimesAnswered"), so the room comes from there.
-                -->
-                <Grid ColumnDefinitions="2*,12,128,12,148,12,Auto,12,Auto" >
-                    <StackPanel Grid.Column="0">
-                        <TextBlock Text="SEARCH" Classes="fieldLabel" />
-                        <!--
-                            The watermark is short enough to actually fit the column. The old
-                            wording ("name or anything written on either side") was always cut off
-                            mid-phrase, and the icon on Clear filters took the last of the room it
-                            had. The tooltip carries the full story instead.
-                        -->
-                        <TextBox Text="{Binding SearchText, Mode=TwoWay}"
-                                 Watermark="name or text"
-                                 ToolTip.Tip="Matches the card's name and anything written on either side of it" />
-                    </StackPanel>
-
-                    <StackPanel Grid.Column="2">
-                        <TextBlock Text="TYPE" Classes="fieldLabel" />
-                        <ComboBox ItemsSource="{Binding CardTypeFilters}"
-                                  SelectedItem="{Binding CardTypeFilter, Mode=TwoWay}"
-                                  HorizontalAlignment="Stretch"
-                                  PlaceholderText="any" />
-                    </StackPanel>
-
-                    <StackPanel Grid.Column="4">
-                        <TextBlock Text="SORT BY" Classes="fieldLabel" />
-                        <ComboBox ItemsSource="{Binding SortFields}"
-                                  SelectedItem="{Binding SortBy, Mode=TwoWay}"
-                                  HorizontalAlignment="Stretch" />
-                    </StackPanel>
-
-                    <StackPanel Grid.Column="6" VerticalAlignment="Bottom">
-                        <CheckBox Content="Descending" IsChecked="{Binding SortDescending, Mode=TwoWay}" />
-                    </StackPanel>
-
-                    <StackPanel Grid.Column="8" VerticalAlignment="Bottom">
-                        <Button Classes="iconText"
-                                AutomationProperties.Name="Clear filters"
-                                Command="{Binding ClearFiltersCommand}">
-                            <StackPanel>
-                                <Path Data="{StaticResource IconFilterOff}" />
-                                <TextBlock Text="Clear filters" />
-                            </StackPanel>
-                        </Button>
-                    </StackPanel>
-                </Grid>
-
-                <StackPanel Orientation="Horizontal" Spacing="18">
-                    <CheckBox Content="Only ones I've never answered" IsChecked="{Binding UntouchedOnly, Mode=TwoWay}" />
-                    <CheckBox Content="Include suspended" IsChecked="{Binding IncludeSuspended, Mode=TwoWay}" />
+                SEARCH is the only star column, so it absorbs everything the fixed ones leave. It
+                had 61px at the default window width, about five characters; the drop-downs are
+                sized to their longest entry ("Multiple choice", "TimesAnswered") and the rest is
+                its.
+            -->
+            <Grid ColumnDefinitions="*,12,128,12,148,12,Auto,12,Auto">
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="SEARCH" Classes="fieldLabel" />
+                    <!--
+                        The two drop-downs are sized to their longest entry — "Multiple choice"
+                        and "TimesAnswered" — and everything left over is the search box's. The
+                        watermark stays short because the tooltip carries the precise version.
+                    -->
+                    <TextBox Text="{Binding SearchText, Mode=TwoWay}"
+                             Watermark="name or card text"
+                             ToolTip.Tip="Matches the card's name and anything written on either side of it" />
                 </StackPanel>
 
-            </StackPanel>
+                <StackPanel Grid.Column="2">
+                    <TextBlock Text="TYPE" Classes="fieldLabel" />
+                    <ComboBox ItemsSource="{Binding CardTypeFilters}"
+                              SelectedItem="{Binding CardTypeFilter, Mode=TwoWay}"
+                              HorizontalAlignment="Stretch"
+                              PlaceholderText="any" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="4">
+                    <TextBlock Text="SORT BY" Classes="fieldLabel" />
+                    <ComboBox ItemsSource="{Binding SortFields}"
+                              SelectedItem="{Binding SortBy, Mode=TwoWay}"
+                              HorizontalAlignment="Stretch" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="6" VerticalAlignment="Bottom">
+                    <ToggleButton Classes="sortDir" MinWidth="104"
+                                  HorizontalContentAlignment="Center"
+                                  AutomationProperties.Name="Sort direction"
+                                  Content="{Binding SortDirectionLabel}"
+                                  IsChecked="{Binding SortDescending, Mode=TwoWay}" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="8" VerticalAlignment="Bottom">
+                    <Button Classes="iconText"
+                            AutomationProperties.Name="Clear filters"
+                            Command="{Binding ClearFiltersCommand}">
+                        <StackPanel>
+                            <Path Data="{StaticResource IconFilterOff}" />
+                            <TextBlock Text="Clear" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
         </Border>
 
         <!--

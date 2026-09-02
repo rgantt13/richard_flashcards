@@ -90,18 +90,15 @@ public sealed partial class ManagementViewModel : ViewModelBase
     [ObservableProperty]
     private CardType? _cardTypeFilter;
 
-    /// <summary>Show only cards that have never been answered.</summary>
-    [ObservableProperty]
-    private bool _untouchedOnly;
-
-    [ObservableProperty]
-    private bool _includeSuspended = true;
-
     [ObservableProperty]
     private FlashcardSortField _sortBy = FlashcardSortField.UpdatedUtc;
 
     [ObservableProperty]
     private bool _sortDescending = true;
+
+    /// <summary>What the sort-direction toggle says. The button shows the state it is in, not
+    /// the one it would switch to — a control that names the other option reads as a question.</summary>
+    public string SortDirectionLabel => SortDescending ? "Descending" : "Ascending";
 
     [ObservableProperty]
     private FlashcardSummary? _selected;
@@ -524,8 +521,9 @@ public sealed partial class ManagementViewModel : ViewModelBase
             // MSSQL and SQLite too, which is the whole point of the tree.
             SubjectIds = SelectedSubject is { } scope ? [scope.Id] : null,
             CardType = CardTypeFilter,
-            IsSuspended = IncludeSuspended ? null : false,
-            UntouchedOnly = UntouchedOnly,
+            // Suspended and never-answered cards are always here. This panel is the library, not
+            // a study queue: hiding a card you own behind a tick box is how it gets lost.
+            IsSuspended = null,
             SortBy = SortBy,
             SortDescending = SortDescending,
             Page = Math.Max(Page, 1),
@@ -638,8 +636,6 @@ public sealed partial class ManagementViewModel : ViewModelBase
     {
         SearchText = null;
         CardTypeFilter = null;
-        UntouchedOnly = false;
-        IncludeSuspended = true;
         SubjectSearch = null;
         Page = 1;
 
@@ -656,14 +652,13 @@ public sealed partial class ManagementViewModel : ViewModelBase
 
     partial void OnCardTypeFilterChanged(CardType? value) => _ = SearchAsync();
 
-    partial void OnUntouchedOnlyChanged(bool value) => _ = SearchAsync();
-
-
-    partial void OnIncludeSuspendedChanged(bool value) => _ = SearchAsync();
-
     partial void OnSortByChanged(FlashcardSortField value) => _ = SearchAsync();
 
-    partial void OnSortDescendingChanged(bool value) => _ = SearchAsync();
+    partial void OnSortDescendingChanged(bool value)
+    {
+        OnPropertyChanged(nameof(SortDirectionLabel));
+        _ = SearchAsync();
+    }
 
     partial void OnPageChanged(int value) => OnPropertyChanged(nameof(ResultSummary));
 
