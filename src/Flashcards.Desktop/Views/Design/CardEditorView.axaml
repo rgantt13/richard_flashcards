@@ -719,6 +719,9 @@
                 Left to right: throw away, what happened, commit. The same arrangement as the study
                 session's grading bar and the manage panel's pager, so the side a control sits on
                 is itself a statement about which way it takes you.
+
+                The commit button carries its icon on the right, as every bottom-right submit in the
+                app does: the icon trails the word the way the button trails the work.
             -->
             <Grid ColumnDefinitions="Auto,18,*,18,Auto">
 
@@ -751,9 +754,9 @@
                         AutomationProperties.Name="{Binding SaveLabel}"
                         Command="{Binding SaveCommand}">
                     <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="{Binding SaveLabel}" />
                         <Path Data="{StaticResource IconCheck}" Width="15" Height="15" Stretch="Uniform"
                               VerticalAlignment="Center" Fill="White" />
-                        <TextBlock Text="{Binding SaveLabel}" />
                     </StackPanel>
                 </Button>
 

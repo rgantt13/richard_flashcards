@@ -46,7 +46,6 @@
 
         <StackPanel DockPanel.Dock="Top" Spacing="3" Margin="0,0,0,16">
             <TextBlock Text="Settings" Classes="h1" />
-            <TextBlock Text="Everything here saves as you change it." Classes="muted" />
         </StackPanel>
 
         <StackPanel DockPanel.Dock="Bottom" Spacing="2" Margin="0,12,0,0">

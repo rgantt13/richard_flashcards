@@ -91,10 +91,10 @@
                     IsEnabled="{Binding CanCopy}"
                     Command="{Binding CopyCommand}">
                 <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock Text="Copy prompt" FontWeight="SemiBold" VerticalAlignment="Center" />
                     <Path Data="{StaticResource IconSparkle}"
                           Fill="{Binding $parent[Button].Foreground}"
                           Width="15" Height="15" Stretch="Uniform" VerticalAlignment="Center" />
-                    <TextBlock Text="Copy prompt" FontWeight="SemiBold" VerticalAlignment="Center" />
                 </StackPanel>
             </Button>
         </Grid>

@@ -49,11 +49,6 @@
             <Setter Property="FontWeight" Value="Bold" />
         </Style>
 
-        <Style Selector="TextBlock.modeCaption">
-            <Setter Property="FontSize" Value="12" />
-            <Setter Property="Opacity" Value="0.75" />
-        </Style>
-
         <Style Selector="TextBlock.modeBlurb">
             <Setter Property="FontSize" Value="11" />
             <Setter Property="Opacity" Value="0.5" />
@@ -72,8 +67,6 @@
 
         <StackPanel DockPanel.Dock="Top" Spacing="3" Margin="0,0,0,20">
             <TextBlock Text="Study" Classes="h1" />
-            <TextBlock Classes="muted"
-                       Text="Pick how you want to work. Every mode draws from the same library — they differ in what they put in front of you first." />
         </StackPanel>
 
         <TextBlock DockPanel.Dock="Bottom" Margin="0,16,0,0"
@@ -111,10 +104,7 @@
                                       VerticalAlignment="Center" />
 
                                 <StackPanel Grid.Column="4" Spacing="5">
-                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <TextBlock Text="{Binding Title}" Classes="modeTitle" />
-                                        <TextBlock Text="{Binding Caption}" Classes="modeCaption" VerticalAlignment="Center" />
-                                    </StackPanel>
+                                    <TextBlock Text="{Binding Title}" Classes="modeTitle" />
                                     <TextBlock Text="{Binding Blurb}" Classes="modeBlurb" />
                                 </StackPanel>
                             </Grid>

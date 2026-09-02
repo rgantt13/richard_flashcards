@@ -53,7 +53,6 @@
 
         <StackPanel DockPanel.Dock="Top" Spacing="3" Margin="0,0,0,14">
             <TextBlock Text="Statistics" Classes="h1" />
-            <TextBlock Text="Your record, across the whole library and down to a single card." Classes="muted" />
         </StackPanel>
 
         <TextBlock DockPanel.Dock="Bottom" Margin="0,12,0,0"
@@ -132,10 +131,6 @@
                                 </StackPanel>
                             </Border>
                         </UniformGrid>
-
-                        <TextBlock Classes="muted" FontSize="11" TextWrapping="Wrap"
-                                   IsVisible="{Binding Highlights.HasAnything}"
-                                   Text="Strongest and weakest only count subjects with at least five answers behind them — below that an accuracy is a coin toss." />
                     </StackPanel>
                 </Border>
 
