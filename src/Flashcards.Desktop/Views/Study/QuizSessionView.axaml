@@ -214,9 +214,20 @@
                                             BorderBrush="{DynamicResource SemiColorBorder}"
                                             Background="{Binding IsSelected, Converter={StaticResource SelectionBrush}}" />
                                     <TextBlock Grid.Column="2" Text="{Binding Text}" TextWrapping="Wrap" VerticalAlignment="Center" />
-                                    <TextBlock Grid.Column="3" Text="correct" FontSize="11" VerticalAlignment="Center"
-                                               Foreground="{DynamicResource SemiColorSuccess}"
-                                               IsVisible="{Binding IsCorrect}" />
+                                    <!--
+                                        Which option was right, and only once you have said what
+                                        you think. The marker used to hang off IsCorrect alone,
+                                        which put the answer on screen beside the question — every
+                                        multiple-choice card gave itself away before you had read
+                                        the options. The outer panel is the gate; the inner label
+                                        is still the one that says which.
+                                    -->
+                                    <Panel Grid.Column="3" Margin="14,0,0,0"
+                                           IsVisible="{Binding $parent[UserControl].((vm:QuizViewModel)DataContext).IsAnswerVisible}">
+                                        <TextBlock Text="correct" FontSize="11" VerticalAlignment="Center"
+                                                   Foreground="{DynamicResource SemiColorSuccess}"
+                                                   IsVisible="{Binding IsCorrect}" />
+                                    </Panel>
                                 </Grid>
                             </Button>
                         </DataTemplate>
