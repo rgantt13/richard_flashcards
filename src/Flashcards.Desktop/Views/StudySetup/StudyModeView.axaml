@@ -35,9 +35,17 @@
             </Setter>
         </Style>
 
+        <!--
+            The lift is set on the button and the colour on the template's presenter, because Semi
+            paints the presenter for :pointerover and a Background set out here loses to it.
+        -->
         <Style Selector="Button.mode:pointerover">
             <Setter Property="RenderTransform" Value="scale(1.015)" />
+        </Style>
+
+        <Style Selector="Button.mode:pointerover /template/ ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource SemiColorFill1}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SemiColorBorder}" />
         </Style>
 
         <Style Selector="Button.mode:pressed">
@@ -61,6 +69,61 @@
             <Setter Property="VerticalAlignment" Value="Stretch" />
             <Setter Property="CornerRadius" Value="2" />
         </Style>
+
+        <!--
+            ····· the default ·····
+
+            Everything a tile has, turned up: the full width of the panel rather than half of it,
+            a border in its own colour instead of the common grey, and a filled Start on the right
+            so the eye lands on something to press. It is the same control underneath, so the lift
+            on hover and the give on press are the ones every other mode has.
+        -->
+        <Style Selector="Button.modeFeature">
+            <Setter Property="Foreground" Value="{DynamicResource SemiColorText0}" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Padding" Value="20,18" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="BorderThickness" Value="1.5" />
+            <Setter Property="Background" Value="{DynamicResource SemiColorFill0}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SemiColorSuccess}" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.12" />
+                </Transitions>
+            </Setter>
+        </Style>
+
+        <Style Selector="Button.modeFeature:pointerover">
+            <Setter Property="RenderTransform" Value="scale(1.008)" />
+        </Style>
+
+        <Style Selector="Button.modeFeature:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SemiColorFill1}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SemiColorSuccess}" />
+        </Style>
+
+        <Style Selector="Button.modeFeature:pressed">
+            <Setter Property="RenderTransform" Value="scale(0.997)" />
+        </Style>
+
+        <Style Selector="Button.modeFeature:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SemiColorFill1}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SemiColorSuccess}" />
+        </Style>
+
+        <Style Selector="TextBlock.featureEyebrow">
+            <Setter Property="FontSize" Value="10" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Foreground" Value="{DynamicResource SemiColorSuccess}" />
+        </Style>
+
+        <Style Selector="Border.featureStart">
+            <Setter Property="Background" Value="{DynamicResource SemiColorSuccess}" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="18,10" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
     </UserControl.Styles>
 
     <DockPanel Margin="28,24">
@@ -74,6 +137,43 @@
                    TextWrapping="Wrap"
                    Text="{Binding ErrorMessage}"
                    IsVisible="{Binding ErrorMessage, Converter={StaticResource NotNull}}" />
+
+        <!--
+            The default, on its own at the foot of the panel. Below the grid rather than first in
+            it: a recommendation that sits in the row it is recommending over reads as one of the
+            six, and the last thing on a screen is the thing you press when you have finished
+            reading the others.
+        -->
+        <Button DockPanel.Dock="Bottom" Classes="modeFeature" Margin="0,8,12,0"
+                AutomationProperties.Name="{Binding Suggested.Title}"
+                Command="{Binding ChooseModeCommand}"
+                CommandParameter="{Binding Suggested}">
+            <Grid ColumnDefinitions="Auto,16,Auto,16,*,20,Auto">
+                <Border Grid.Column="0" Classes="accent" Width="5"
+                        Background="{Binding Suggested.AccentKey, Converter={StaticResource ThemeBrush}}" />
+
+                <Path Grid.Column="2"
+                      Data="{Binding Suggested.IconKey, Converter={StaticResource IconGeometry}}"
+                      Fill="{Binding Suggested.AccentKey, Converter={StaticResource ThemeBrush}}"
+                      Width="30" Height="30" Stretch="Uniform"
+                      VerticalAlignment="Center" />
+
+                <StackPanel Grid.Column="4" Spacing="4" VerticalAlignment="Center">
+                    <TextBlock Text="START HERE" Classes="featureEyebrow" />
+                    <TextBlock Text="{Binding Suggested.Title}" FontSize="19" FontWeight="Bold" />
+                    <TextBlock Text="{Binding Suggested.Blurb}" Classes="modeBlurb" />
+                </StackPanel>
+
+                <Border Grid.Column="6" Classes="featureStart">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="Study" FontWeight="SemiBold" FontSize="14"
+                                   Foreground="White" VerticalAlignment="Center" />
+                        <Path Data="{StaticResource IconPlay}" Fill="White"
+                              Width="14" Height="14" Stretch="Uniform" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Button>
 
         <ScrollViewer>
             <ItemsControl ItemsSource="{Binding Modes}" VerticalAlignment="Top">

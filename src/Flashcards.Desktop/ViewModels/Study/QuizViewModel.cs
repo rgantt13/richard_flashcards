@@ -71,7 +71,19 @@ public sealed partial class QuizViewModel : ViewModelBase
     /// <summary>The library, subjects and cards — shown on the Custom prep screen only.</summary>
     public SubjectBrowserViewModel Browser { get; }
 
-    public IReadOnlyList<StudyModeCard> Modes => StudyModeCard.All;
+    /// <summary>
+    /// The mode offered on its own at the foot of the panel, and the one to press if you have no
+    /// opinion: it needs no decisions and it picks the cards you are worst at.
+    /// </summary>
+    public StudyModeCard Suggested { get; } = StudyModeCard.For(StudyMode.Suggested);
+
+    /// <summary>
+    /// The rest, in catalogue order. Suggested is missing from the grid because it is not one of
+    /// several equal choices any more — it is the default, and a default sitting among its
+    /// alternatives is not being offered as one.
+    /// </summary>
+    public IReadOnlyList<StudyModeCard> Modes { get; } =
+        [.. StudyModeCard.All.Where(m => m.Mode != StudyMode.Suggested)];
 
     [ObservableProperty]
     private QuizStage _stage = QuizStage.ModeSelect;
