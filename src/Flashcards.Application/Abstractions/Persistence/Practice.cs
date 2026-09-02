@@ -13,6 +13,16 @@ public interface IReviewLogRepository
 
     /// <summary>Forgets a card's history. Used when the user asks to reset its statistics.</summary>
     Task<int> ClearAsync(IReadOnlyCollection<Guid> cardIds, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Forgets every answer in the library. The cards themselves are untouched.
+    /// <para>
+    /// Separate from the method above rather than that one called with every id: the ids would
+    /// have to be fetched and then chunked past SQLite's bound-parameter limit, to express
+    /// something SQL says in three words.
+    /// </para>
+    /// </summary>
+    Task<int> ClearAllAsync(CancellationToken cancellationToken);
 }
 
 /// <summary>

@@ -46,4 +46,15 @@ internal sealed class ReviewLogRepository(DbSession session) : IReviewLogReposit
             new { Ids = cardIds.ToArray() },
             session.DbTransaction, cancellationToken: cancellationToken));
     }
+
+    public async Task<int> ClearAllAsync(CancellationToken cancellationToken)
+    {
+        var connection = await session.GetConnectionAsync(cancellationToken);
+
+        // No WHERE, and no id list to chunk past SQLite's bound-parameter limit — which is the
+        // whole reason this is not the other method called with every id in the library.
+        return await connection.ExecuteAsync(new CommandDefinition(
+            "DELETE FROM review_log;",
+            transaction: session.DbTransaction, cancellationToken: cancellationToken));
+    }
 }

@@ -9,6 +9,8 @@ using Flashcards.Application.Quiz.Commands;
 using Flashcards.Application.Quiz.Queries;
 using Flashcards.Application.Stats.Commands;
 using Flashcards.Application.Stats.Queries;
+using Flashcards.Application.Settings.Commands;
+using Flashcards.Application.Settings.Queries;
 using Flashcards.Application.Subjects.Commands;
 using Flashcards.Application.Subjects.Queries;
 using Flashcards.Application.Transfer;
@@ -81,6 +83,12 @@ public static class DependencyInjection
 
         // ---- media: queries ----
         services.AddTransient<IQueryHandler<LoadMediaQuery, byte[]?>, LoadMediaHandler>();
+
+        // ---- settings ----
+        services.AddTransient<IQueryHandler<GetSettingsQuery, AppSettings>, GetSettingsHandler>();
+        services.AddTransient<IQueryHandler<GetDataLocationQuery, DataLocation>, GetDataLocationHandler>();
+        services.AddTransient<ICommandHandler<SaveSettingsCommand, Unit>, SaveSettingsHandler>();
+        services.AddTransient<ICommandHandler<ClearAllHistoryCommand, int>, ClearAllHistoryHandler>();
 
         // ---- transfer: the deck file both ways ----
         services.AddTransient<IQueryHandler<BuildDeckExportQuery, DeckDocument>, BuildDeckExportHandler>();

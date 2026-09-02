@@ -11,6 +11,8 @@ internal sealed class OverallStatsRow
     public int SubjectCount { get; init; }
     public int CardsPractised { get; init; }
     public DateTimeOffset? LastAnsweredUtc { get; init; }
+    public int AnsweredToday { get; init; }
+    public int CorrectToday { get; init; }
 }
 
 internal sealed class SubjectStatsRow
@@ -35,5 +37,7 @@ internal sealed class CardStatsRow
     public int Answered { get; init; }
     public int Correct { get; init; }
     public DateTimeOffset? LastAnsweredUtc { get; init; }
+    public int AnsweredToday { get; init; }
+    public int CorrectToday { get; init; }
     public double? AverageSeconds { get; init; }
 }

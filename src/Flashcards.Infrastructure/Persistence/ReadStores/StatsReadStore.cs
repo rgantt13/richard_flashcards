@@ -21,6 +21,12 @@ internal sealed class StatsReadStore(DbSession session) : IStatsReadStore
         // Every figure comes off review_log except the library counts. SUM(was_correct) works
         // because the column is constrained to 0/1 — cheaper than SUM(CASE WHEN ...) and, with the
         // CHECK constraint in place, exactly as safe.
+        // Local midnight, expressed in UTC. Both halves matter: "today" is the user's day, not
+        // Greenwich's, and the comparison below is lexicographic over round-trip "O" strings —
+        // which only sorts correctly when every value carries the same +00:00 offset the stored
+        // ones do. Converting before binding is what guarantees that.
+        var since = new DateTimeOffset(DateTime.Today, DateTimeOffset.Now.Offset).ToUniversalTime();
+
         var row = await connection.QuerySingleAsync<OverallStatsRow>(new CommandDefinition(
             """
             SELECT (SELECT COUNT(*) FROM review_log)                        AS Answered,
@@ -28,16 +34,24 @@ internal sealed class StatsReadStore(DbSession session) : IStatsReadStore
                    (SELECT COUNT(*) FROM flashcards)                        AS TotalCards,
                    (SELECT COUNT(*) FROM subjects)                          AS SubjectCount,
                    (SELECT COUNT(DISTINCT card_id) FROM review_log)         AS CardsPractised,
-                   (SELECT MAX(reviewed_utc) FROM review_log)               AS LastAnsweredUtc;
+                   (SELECT MAX(reviewed_utc) FROM review_log)               AS LastAnsweredUtc,
+                   (SELECT COUNT(*) FROM review_log WHERE reviewed_utc >= @Since)
+                                                                            AS AnsweredToday,
+                   (SELECT COALESCE(SUM(was_correct), 0) FROM review_log WHERE reviewed_utc >= @Since)
+                                                                            AS CorrectToday;
             """,
-            transaction: session.DbTransaction, cancellationToken: cancellationToken));
+            new { Since = since },
+            session.DbTransaction, cancellationToken: cancellationToken));
 
         return new OverallStats(
             new PracticeStats(row.Answered, row.Correct),
             row.TotalCards,
             row.SubjectCount,
             row.CardsPractised,
-            row.LastAnsweredUtc);
+            row.LastAnsweredUtc)
+        {
+            Today = new PracticeStats(row.AnsweredToday, row.CorrectToday),
+        };
     }
 
     public async Task<CardStats> GetCardStatsAsync(Guid cardId, CancellationToken cancellationToken)

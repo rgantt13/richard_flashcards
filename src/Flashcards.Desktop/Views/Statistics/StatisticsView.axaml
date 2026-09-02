@@ -100,6 +100,9 @@
                                     <TextBlock Text="{Binding Highlights.MostAnswered.Name}" Classes="highlightWho" />
                                     <TextBlock Text="{Binding Highlights.MostAnswered.Figure}" Classes="highlightFigure" />
                                     <TextBlock Text="{Binding Highlights.MostAnswered.Detail}" Classes="highlightDetail" />
+                                    <!-- The three practice-based tiles are blank until there is a record to rank. -->
+                                    <TextBlock Text="not enough answers yet" Classes="highlightDetail"
+                                               IsVisible="{Binding Highlights.MostAnswered, Converter={StaticResource NotNull}, ConverterParameter=invert}" />
                                 </StackPanel>
                             </Border>
 
@@ -110,6 +113,9 @@
                                                Foreground="{DynamicResource SemiColorSuccess}" />
                                     <TextBlock Text="{Binding Highlights.BestAccuracy.Figure}" Classes="highlightFigure" />
                                     <TextBlock Text="{Binding Highlights.BestAccuracy.Detail}" Classes="highlightDetail" />
+                                    <!-- The three practice-based tiles are blank until there is a record to rank. -->
+                                    <TextBlock Text="not enough answers yet" Classes="highlightDetail"
+                                               IsVisible="{Binding Highlights.BestAccuracy, Converter={StaticResource NotNull}, ConverterParameter=invert}" />
                                 </StackPanel>
                             </Border>
 
@@ -120,6 +126,9 @@
                                                Foreground="{DynamicResource SemiColorDanger}" />
                                     <TextBlock Text="{Binding Highlights.NeedsWork.Figure}" Classes="highlightFigure" />
                                     <TextBlock Text="{Binding Highlights.NeedsWork.Detail}" Classes="highlightDetail" />
+                                    <!-- The three practice-based tiles are blank until there is a record to rank. -->
+                                    <TextBlock Text="not enough answers yet" Classes="highlightDetail"
+                                               IsVisible="{Binding Highlights.NeedsWork, Converter={StaticResource NotNull}, ConverterParameter=invert}" />
                                 </StackPanel>
                             </Border>
                         </UniformGrid>

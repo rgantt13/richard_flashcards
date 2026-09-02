@@ -9,7 +9,26 @@
         MinWidth="1040" MinHeight="680"
         WindowStartupLocation="CenterScreen">
 
-    <Grid ColumnDefinitions="228,*">
+    <Window.Styles>
+        <!-- A figure in the sidebar footer: a number over a quiet word, as everywhere else. -->
+        <Style Selector="StackPanel.sideFigure > TextBlock:nth-child(1)">
+            <Setter Property="FontSize" Value="22" />
+            <Setter Property="FontWeight" Value="Bold" />
+        </Style>
+
+        <Style Selector="StackPanel.sideFigure > TextBlock:nth-child(2)">
+            <Setter Property="FontSize" Value="10" />
+            <Setter Property="Opacity" Value="0.55" />
+        </Style>
+
+        <Style Selector="TextBlock.sideLabel">
+            <Setter Property="FontSize" Value="10" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Opacity" Value="0.45" />
+        </Style>
+    </Window.Styles>
+
+    <Grid ColumnDefinitions="248,*">
 
         <!-- Sidebar -->
         <Border Grid.Column="0"
@@ -18,10 +37,60 @@
                 BorderThickness="0,0,1,0">
             <DockPanel Margin="0,18,0,14">
 
-                <StackPanel DockPanel.Dock="Top" Margin="20,0,20,20" Spacing="2">
-                    <TextBlock Text="Flashcards" FontSize="19" FontWeight="Bold" />
+                <StackPanel DockPanel.Dock="Top" Margin="20,0,20,22" Spacing="3">
+                    <TextBlock Text="Flashcards" FontSize="21" FontWeight="Bold" />
                     <TextBlock Text="spaced repetition, locally" Classes="muted" />
                 </StackPanel>
+
+                <!--
+                    ····· today, pinned to the foot ·····
+
+                    The sidebar held four rows and several hundred pixels of nothing. This is the
+                    one figure that is true whichever panel you are on and worth seeing from all of
+                    them — you do not want to open Statistics to find out whether you have studied
+                    yet. It reloads whenever you move between panels, which is exactly when leaving
+                    a sitting has changed it.
+                -->
+                <Border DockPanel.Dock="Bottom" Margin="16,16,16,0" Padding="14,12"
+                        Background="{DynamicResource SemiColorBackground1}"
+                        BorderBrush="{DynamicResource SemiColorBorder}"
+                        BorderThickness="1" CornerRadius="8"
+                        IsVisible="{Binding Overall, Converter={StaticResource NotNull}}">
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="TODAY" Classes="sideLabel" />
+
+                        <UniformGrid Columns="2" IsVisible="{Binding Overall.StudiedToday}">
+                            <StackPanel Classes="sideFigure" Spacing="1">
+                                <TextBlock Text="{Binding Overall.Today.Answered}" />
+                                <TextBlock Text="answered" />
+                            </StackPanel>
+                            <!--
+                                Deliberately not tinted green. It is a percentage, not a verdict —
+                                a bad morning rendered in success green reads as the app being
+                                pleased with you, which is the wrong note to strike on the way to
+                                fixing it.
+                            -->
+                            <StackPanel Classes="sideFigure" Spacing="1">
+                                <TextBlock Text="{Binding TodayAccuracy}" />
+                                <TextBlock Text="correct" />
+                            </StackPanel>
+                        </UniformGrid>
+
+                        <TextBlock Classes="muted" FontSize="11" TextWrapping="Wrap"
+                                   IsVisible="{Binding !Overall.StudiedToday}"
+                                   Text="Nothing answered yet. Pick a mode on the Study panel." />
+
+                        <Border Height="1" Background="{DynamicResource SemiColorBorder}" />
+
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <TextBlock Classes="muted" FontSize="11"
+                                       Text="{Binding Overall.TotalCards, StringFormat='{}{0} cards'}" />
+                            <TextBlock Classes="muted" FontSize="11" Text="·" />
+                            <TextBlock Classes="muted" FontSize="11"
+                                       Text="{Binding Overall.SubjectCount, StringFormat='{}{0} subjects'}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
 
                 <ListBox ItemsSource="{Binding Navigation}"
                          SelectedItem="{Binding SelectedNavigation, Mode=TwoWay}"
@@ -38,12 +107,12 @@
                             takes its icon with it, the same way the manage grid's row actions do.
                         -->
                         <DataTemplate x:DataType="vm:NavigationItem">
-                            <StackPanel Orientation="Horizontal" Spacing="11" Margin="4,7">
+                            <StackPanel Orientation="Horizontal" Spacing="13" Margin="6,11">
                                 <Path Data="{Binding IconKey, Converter={StaticResource IconGeometry}}"
                                       Fill="{Binding $parent[ListBoxItem].Foreground}"
-                                      Width="17" Height="17" Stretch="Uniform"
+                                      Width="20" Height="20" Stretch="Uniform"
                                       VerticalAlignment="Center" />
-                                <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="14"
+                                <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="15"
                                            VerticalAlignment="Center" />
                             </StackPanel>
                         </DataTemplate>
