@@ -1,0 +1,147 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:Flashcards.Desktop.ViewModels.Study"
+             xmlns:shared="clr-namespace:Flashcards.Desktop.Views.Shared"
+             x:DataType="vm:QuizViewModel"
+             x:Class="Flashcards.Desktop.Views.StudySetup.StudyPrepView">
+
+    <!--
+        The chosen mode's options, and the button that starts it.
+
+        One view rather than seven. The options a mode offers are data on StudyModeCard, so the
+        differences between modes are IsVisible bindings here rather than six near-identical files
+        that would have to be kept in step every time an option is added.
+
+        The subject and card tiers only appear for Custom — the one mode where choosing cards is
+        the point. Everything else opens straight onto its own handful of settings.
+
+        Back on the left, Study on the right, what is about to happen between them: the same
+        arrangement the designer's footer and the manage panel's paging bar use.
+    -->
+
+    <UserControl.Styles>
+        <Style Selector="TextBlock.optionLabel">
+            <Setter Property="FontSize" Value="10" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Opacity" Value="0.5" />
+            <Setter Property="Margin" Value="2,0,0,4" />
+        </Style>
+
+        <Style Selector="TextBlock.optionHint">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Opacity" Value="0.5" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Margin" Value="2,4,0,0" />
+        </Style>
+    </UserControl.Styles>
+
+    <DockPanel Margin="28,24">
+
+        <StackPanel DockPanel.Dock="Top" Spacing="3" Margin="0,0,0,14">
+            <TextBlock Text="{Binding PrepTitle}" Classes="h1" />
+            <TextBlock Text="{Binding PrepBlurb}" Classes="muted" TextWrapping="Wrap" />
+        </StackPanel>
+
+        <!-- ····· the footer: back, status, start ····· -->
+        <Grid DockPanel.Dock="Bottom" ColumnDefinitions="Auto,16,*,16,Auto" Margin="0,16,0,0">
+            <Button Grid.Column="0" Classes="iconText" MinWidth="104"
+                    HorizontalContentAlignment="Center"
+                    AutomationProperties.Name="Back"
+                    Command="{Binding BackToModesCommand}">
+                <StackPanel Orientation="Horizontal" Spacing="7">
+                    <Path Data="{StaticResource IconChevronLeft}"
+                          Fill="{Binding $parent[Button].Foreground}"
+                          Width="13" Height="13" Stretch="Uniform" VerticalAlignment="Center" />
+                    <TextBlock Text="Back" VerticalAlignment="Center" />
+                </StackPanel>
+            </Button>
+
+            <StackPanel Grid.Column="2" VerticalAlignment="Center" Spacing="2">
+                <TextBlock Text="{Binding ErrorMessage}"
+                           Foreground="{DynamicResource SemiColorDanger}"
+                           TextWrapping="Wrap"
+                           HorizontalAlignment="Center" TextAlignment="Center"
+                           IsVisible="{Binding ErrorMessage, Converter={StaticResource NotNull}}" />
+                <TextBlock Classes="muted" HorizontalAlignment="Center"
+                           IsVisible="{Binding ShowsPickers}"
+                           Text="{Binding Browser.SelectionSummary, StringFormat='{}{0} — none ticked means all'}" />
+            </StackPanel>
+
+            <Button Grid.Column="4" Classes="Primary" MinWidth="150" Height="42"
+                    HorizontalContentAlignment="Center"
+                    AutomationProperties.Name="Study"
+                    IsEnabled="{Binding CanStart}"
+                    Command="{Binding StartStudyCommand}">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Path Data="{StaticResource IconPlay}"
+                          Fill="{Binding $parent[Button].Foreground}"
+                          Width="15" Height="15" Stretch="Uniform" VerticalAlignment="Center" />
+                    <TextBlock Text="Study" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center" />
+                </StackPanel>
+            </Button>
+        </Grid>
+
+        <!-- ····· the options every mode has something of ····· -->
+        <Border DockPanel.Dock="Top" Classes="card" Padding="18,16" Margin="0,0,0,14">
+            <StackPanel Spacing="14">
+
+                <Grid ColumnDefinitions="*,20,*,20,*">
+
+                    <!-- How many. Marathon has no cap, so it does not offer one. -->
+                    <StackPanel Grid.Column="0" IsVisible="{Binding Mode.HasCardCount}">
+                        <TextBlock Text="HOW MANY CARDS" Classes="optionLabel" />
+                        <Grid ColumnDefinitions="*,12,Auto">
+                            <Slider Grid.Column="0" Minimum="5" Maximum="100" TickFrequency="5"
+                                    IsSnapToTickEnabled="True"
+                                    Value="{Binding CardCount, Mode=TwoWay}" />
+                            <TextBlock Grid.Column="2" Text="{Binding CardCount}"
+                                       VerticalAlignment="Center" FontWeight="SemiBold" Width="34" />
+                        </Grid>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="0" IsVisible="{Binding !Mode.HasCardCount}" VerticalAlignment="Center">
+                        <TextBlock Text="HOW MANY CARDS" Classes="optionLabel" />
+                        <TextBlock Text="Everything that matches." Classes="muted" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="TIME LIMIT FOR THE SITTING" Classes="optionLabel" />
+                        <ComboBox HorizontalAlignment="Stretch"
+                                  ItemsSource="{Binding SessionLimits}"
+                                  SelectedItem="{Binding SessionLimit, Mode=TwoWay}"
+                                  DisplayMemberBinding="{Binding Label}" />
+                        <TextBlock Classes="optionHint" Text="When it runs out the sitting ends and you see the summary." />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="4">
+                        <TextBlock Text="TIME LIMIT PER QUESTION" Classes="optionLabel" />
+                        <ComboBox HorizontalAlignment="Stretch"
+                                  ItemsSource="{Binding QuestionLimits}"
+                                  SelectedItem="{Binding QuestionLimit, Mode=TwoWay}"
+                                  DisplayMemberBinding="{Binding Label}" />
+                        <TextBlock Classes="optionHint" Text="Running out marks the card wrong and moves on. It comes round again." />
+                    </StackPanel>
+                </Grid>
+
+                <StackPanel Orientation="Horizontal" Spacing="24">
+                    <StackPanel>
+                        <CheckBox Content="Only cards the app can mark for me"
+                                  IsChecked="{Binding AutoGradedOnly, Mode=TwoWay}" />
+                        <TextBlock Classes="optionHint" Margin="26,0,0,0"
+                                   Text="Multiple choice and fill in the blank. Leaves out cards you grade yourself." />
+                    </StackPanel>
+
+                    <CheckBox Content="Shuffle multiple-choice options" VerticalAlignment="Top"
+                              IsChecked="{Binding ShuffleChoices, Mode=TwoWay}" />
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- ····· Custom only: the library, to pick from ····· -->
+        <Grid RowDefinitions="Auto,14,*,14,*" IsVisible="{Binding ShowsPickers}">
+            <shared:OverallStatsCard Grid.Row="0" DataContext="{Binding Browser}" />
+            <shared:SubjectStatsCard Grid.Row="2" DataContext="{Binding Browser}" />
+            <shared:CardStatsCard    Grid.Row="4" DataContext="{Binding Browser}" />
+        </Grid>
+    </DockPanel>
+</UserControl>

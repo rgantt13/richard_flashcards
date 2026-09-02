@@ -14,16 +14,5 @@ internal sealed class StartQuizSessionHandler(IQuizReadStore store)
     : IQueryHandler<StartQuizSessionQuery, QuizSession>
 {
     public async Task<QuizSession> HandleAsync(StartQuizSessionQuery query, CancellationToken cancellationToken)
-    {
-        var options = query.Options;
-
-        var ids = await store.GetQuizQueueAsync(
-            options.SubjectIds,
-            options.CardIds,
-            options.MaxCards,
-            options.HardestFirst,
-            cancellationToken);
-
-        return new QuizSession(ids);
-    }
+        => new(await store.GetQuizQueueAsync(query.Options, cancellationToken));
 }

@@ -6,6 +6,7 @@ using Flashcards.Desktop.Services;
 using Flashcards.Desktop.ViewModels.Design;
 using Flashcards.Desktop.ViewModels.Manage;
 using Flashcards.Desktop.ViewModels.Shell;
+using Flashcards.Desktop.ViewModels.Statistics;
 using Flashcards.Desktop.ViewModels.Study;
 using Flashcards.Desktop.Views.Shell;
 using Flashcards.Infrastructure;
@@ -42,6 +43,7 @@ public partial class App : Avalonia.Application
         services.AddTransient<CardEditorViewModel>();
         services.AddTransient<ManagementViewModel>();
         services.AddTransient<QuizViewModel>();
+        services.AddTransient<StatisticsViewModel>();
 
         Services = services.BuildServiceProvider();
 

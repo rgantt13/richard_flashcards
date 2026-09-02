@@ -8,6 +8,22 @@
              x:DataType="vm:QuizViewModel"
              x:Class="Flashcards.Desktop.Views.Study.QuizSessionView">
 
+    <UserControl.Styles>
+        <!--
+            The per-question countdown. It goes red over the last five seconds — a class toggled
+            from the view model rather than a converter returning a brush, so the ordinary state
+            keeps the theme's own foreground instead of having one hard-coded for it.
+        -->
+        <Style Selector="TextBlock.clock">
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+
+        <Style Selector="TextBlock.clock.critical">
+            <Setter Property="Foreground" Value="{DynamicResource SemiColorDanger}" />
+        </Style>
+    </UserControl.Styles>
+
     <!--
         Working through the queue. Shown by QuizView while a session is running.
 
@@ -37,6 +53,24 @@
             </StackPanel>
 
             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="16">
+                <!--
+                    The clocks, when the mode is running one. Both are read-outs rather than
+                    controls: the per-question one is the pressure, and the sitting one is how long
+                    is left overall. Each is hidden entirely when its limit is "no limit", because
+                    a permanently blank slot beside the score reads as something being broken.
+                -->
+                <Border Classes="chip" VerticalAlignment="Center"
+                        Background="{DynamicResource SemiColorFill1}"
+                        IsVisible="{Binding HasQuestionClock}">
+                    <TextBlock Text="{Binding QuestionClockLabel}"
+                               Classes="clock"
+                               Classes.critical="{Binding IsQuestionClockCritical}" />
+                </Border>
+
+                <TextBlock VerticalAlignment="Center" Classes="muted"
+                           IsVisible="{Binding HasSessionClock}"
+                           Text="{Binding SessionClockLabel, StringFormat='{}{0} left'}" />
+
                 <TextBlock Text="{Binding ProgressLabel}" Classes="muted" VerticalAlignment="Center" />
                 <TextBlock Text="{Binding AccuracyLabel}" Classes="muted" VerticalAlignment="Center" />
                 <Button Content="End session" Command="{Binding EndSessionCommand}" />

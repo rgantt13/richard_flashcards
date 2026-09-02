@@ -37,6 +37,6 @@
         </Border>
 
         <Button Content="Back to setup" Classes="Primary" HorizontalAlignment="Center"
-                Padding="22,10" Command="{Binding BackToSetupCommand}" />
+                Padding="22,10" Command="{Binding BackToModesCommand}" />
     </StackPanel>
 </UserControl>

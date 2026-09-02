@@ -3,11 +3,25 @@ using CommunityToolkit.Mvvm.Input;
 using Flashcards.Desktop.ViewModels.Design;
 using Flashcards.Desktop.ViewModels.Manage;
 using Flashcards.Desktop.ViewModels.Shared;
+using Flashcards.Desktop.ViewModels.Statistics;
 using Flashcards.Desktop.ViewModels.Study;
 
 namespace Flashcards.Desktop.ViewModels.Shell;
 
-public sealed record NavigationItem(string Key, string Title, string Glyph, string Description);
+/// <summary>
+/// One entry in the sidebar.
+/// <para>
+/// <paramref name="IconKey"/> names a geometry in App.axaml rather than holding one, so the shell's
+/// view model stays free of Avalonia types — the same arrangement the study mode catalogue uses for
+/// its accent colours.
+/// </para>
+/// <para>
+/// The line of description each entry used to carry is gone. "Search, edit and prune" under a
+/// heading that already says Manage was explaining a word that needed no explaining, and the icon
+/// now does the job in less room.
+/// </para>
+/// </summary>
+public sealed record NavigationItem(string Key, string Title, string IconKey);
 
 /// <summary>
 /// The shell. Owns one instance of each panel view model and swaps which one the ContentControl
@@ -23,11 +37,13 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     public MainWindowViewModel(
         CardEditorViewModel editor,
         ManagementViewModel management,
-        QuizViewModel quiz)
+        QuizViewModel quiz,
+        StatisticsViewModel statistics)
     {
         Editor = editor;
         Management = management;
         Quiz = quiz;
+        Statistics = statistics;
 
         // Clicking Edit on a search result opens the designer loaded with that card.
         Management.EditRequested += async (_, id) =>
@@ -49,14 +65,17 @@ public sealed partial class MainWindowViewModel : ViewModelBase
 
     public QuizViewModel Quiz { get; }
 
+    public StatisticsViewModel Statistics { get; }
+
     // Subjects lost its panel when it became a tag: you type one into the designer rather than
     // maintaining a list of them, and an unused tag retires itself.
 
     public IReadOnlyList<NavigationItem> Navigation { get; } =
     [
-        new("quiz", "Study", "", "Work through what is due"),
-        new("editor", "Design", "", "Build a card"),
-        new("manage", "Manage", "", "Search, edit and prune"),
+        new("quiz",   "Study",      "IconStudy"),
+        new("editor", "Design",     "IconEdit"),
+        new("manage", "Manage",     "IconManage"),
+        new("stats",  "Statistics", "IconStats"),
     ];
 
     [ObservableProperty]
@@ -73,6 +92,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         {
             "editor" => (ViewModelBase)Editor,
             "manage" => Management,
+            "stats" => Statistics,
             _ => Quiz,
         };
 

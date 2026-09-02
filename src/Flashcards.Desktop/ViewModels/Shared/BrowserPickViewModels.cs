@@ -2,10 +2,10 @@ using Avalonia;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Flashcards.Application.Contracts;
 
-namespace Flashcards.Desktop.ViewModels.StudySetup;
+namespace Flashcards.Desktop.ViewModels.Shared;
 
 /// <summary>
-/// One subject on the Study panel: its record and whether it is in the session being built.
+/// One subject in the browser: its record, and whether it is ticked.
 /// <para>
 /// Selection and statistics are the same row deliberately. Choosing what to study and seeing how
 /// you do at it are the same decision, so splitting them across two controls made you look in two
@@ -57,7 +57,7 @@ public sealed partial class SubjectPickViewModel(SubjectStats stats) : Observabl
     private bool _isIncluded;
 }
 
-/// <summary>One card on the Study panel: its record and whether it is in the custom session.</summary>
+/// <summary>One card in the browser: its record, and whether it is ticked.</summary>
 public sealed partial class CardPickViewModel(FlashcardSummary card) : ObservableObject
 {
     public FlashcardSummary Card { get; } = card;

@@ -29,10 +29,22 @@
                          BorderThickness="0"
                          Margin="10,0">
                     <ListBox.ItemTemplate>
+                        <!--
+                            Icon then name, on one line. The descriptions that used to sit under
+                            each name were explaining words that explain themselves, and cost the
+                            sidebar three lines per entry to do it.
+
+                            The glyph fills from the row's own Foreground so the selected entry
+                            takes its icon with it, the same way the manage grid's row actions do.
+                        -->
                         <DataTemplate x:DataType="vm:NavigationItem">
-                            <StackPanel Spacing="1" Margin="4,6">
-                                <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="14" />
-                                <TextBlock Text="{Binding Description}" Classes="muted" />
+                            <StackPanel Orientation="Horizontal" Spacing="11" Margin="4,7">
+                                <Path Data="{Binding IconKey, Converter={StaticResource IconGeometry}}"
+                                      Fill="{Binding $parent[ListBoxItem].Foreground}"
+                                      Width="17" Height="17" Stretch="Uniform"
+                                      VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="14"
+                                           VerticalAlignment="Center" />
                             </StackPanel>
                         </DataTemplate>
                     </ListBox.ItemTemplate>

@@ -27,6 +27,9 @@
             <conv:ColorHexToTintBrushConverter x:Key="HexTint" />
             <conv:RelativeTimeConverter x:Key="RelativeTime" />
             <conv:CardTypeGlyphConverter x:Key="CardTypeGlyph" />
+            <conv:ThemeBrushConverter x:Key="ThemeBrush" />
+            <conv:IconGeometryConverter x:Key="IconGeometry" />
+            <conv:CardTypeIconConverter x:Key="CardTypeIcon" />
             <conv:CardTypeNameConverter x:Key="CardTypeName" />
             <conv:DepthToIndentConverter x:Key="DepthIndent" />
             <conv:InheritedOpacityConverter x:Key="InheritedOpacity" />
@@ -64,6 +67,49 @@
             <StreamGeometry x:Key="IconExport">M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z</StreamGeometry>
             <!-- A funnel with a stroke through it: filtering, switched off. -->
             <StreamGeometry x:Key="IconFilterOff">M14.73 13.31 17.41 16 16 17.41l-2.69-2.69V21h-4v-8l-5.5-6.5H2.41L1 5.09 2.91 3.18l1.41 1.41L20.83 21.1l-1.41 1.41-4.69-4.69v-4.51zM6.4 4l4.6 5.44V10h1.2L18.6 4H6.4z</StreamGeometry>
+
+            <!--
+                ····· the four panels ·····
+
+                One per sidebar entry. The sidebar used to carry a line of description under each
+                name; a mortarboard, a pencil, a list and a chart say the same thing in the space
+                the descriptions were taking.
+            -->
+            <StreamGeometry x:Key="IconStudy">M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82zM12 3 1 9l11 6 9-4.91V17h2V9L12 3z</StreamGeometry>
+            <StreamGeometry x:Key="IconManage">M3 14h4v-4H3v4zm0 5h4v-4H3v4zM3 9h4V5H3v4zm5 5h13v-4H8v4zm0 5h13v-4H8v4zM8 5v4h13V5H8z</StreamGeometry>
+            <StreamGeometry x:Key="IconStats">M5 9.2h3V19H5V9.2zM10.6 5h2.8v14h-2.8V5zm5.6 8H19v6h-2.8v-6z</StreamGeometry>
+
+            <!-- Starting a sitting. -->
+            <StreamGeometry x:Key="IconPlay">M8 5v14l11-7z</StreamGeometry>
+
+            <!--
+                ····· the study modes ·····
+
+                One per tile, chosen so the row reads without the labels: sliders for the mode you
+                configure, crossed arrows for the shuffle, a target for your weak spots, a star for
+                what is new, a rewind for what you just missed, a stopwatch for the drill, and a
+                stack for the one that takes everything.
+            -->
+            <StreamGeometry x:Key="IconTune">M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z</StreamGeometry>
+            <StreamGeometry x:Key="IconShuffle">M10.59 9.17 5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z</StreamGeometry>
+            <StreamGeometry x:Key="IconTarget">M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3A8.994 8.994 0 0 0 13 3.06V1h-2v2.06A8.994 8.994 0 0 0 3.06 11H1v2h2.06A8.994 8.994 0 0 0 11 20.94V23h2v-2.06A8.994 8.994 0 0 0 20.94 13H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z</StreamGeometry>
+            <StreamGeometry x:Key="IconStar">M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z</StreamGeometry>
+            <StreamGeometry x:Key="IconReplay">M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z</StreamGeometry>
+            <StreamGeometry x:Key="IconTimer">M15 1H9v2h6V1zm-4 13h2V8h-2v6zm8.03-6.61 1.42-1.42c-.43-.51-.9-.99-1.41-1.41l-1.42 1.42A8.962 8.962 0 0 0 12 4c-4.97 0-9 4.03-9 9s4.02 9 9 9 9-4.03 9-9c0-2.12-.74-4.07-1.97-5.61zM12 20c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z</StreamGeometry>
+            <StreamGeometry x:Key="IconLayers">m11.99 18.54-7.37-5.73L3 14.07l9 7 9-7-1.63-1.27-7.38 5.74zM12 16l7.36-5.73L21 9l-9-7-9 7 1.63 1.27L12 16z</StreamGeometry>
+
+            <!--
+                ····· the four card types ·····
+
+                Shown beside the name in the designer's type drop-down, where the difference between
+                "Question and answer" and "Fill in the blank" is otherwise four words of reading.
+                Two arrows for a card with two sides, a radio button for the one you pick from, a
+                line of text with a gap in it for cloze, and a brush for the one you draw.
+            -->
+            <StreamGeometry x:Key="IconCardStandard">M9.01 14H2v2h7.01v3L13 15l-3.99-4v3zm5.98-1v-3H22V8h-7.01V5L11 9l3.99 4z</StreamGeometry>
+            <StreamGeometry x:Key="IconCardChoice">M12 20c4.42 0 8-3.58 8-8s-3.58-8-8-8-8 3.58-8 8 3.58 8 8 8zm0-14c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6 2.69-6 6-6zm0 2c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z</StreamGeometry>
+            <StreamGeometry x:Key="IconCardCloze">M3 5h18v2H3V5zm0 12h18v2H3v-2zm0-6h5v2H3v-2zm8 0h10v2H11v-2z</StreamGeometry>
+            <StreamGeometry x:Key="IconCardFreeform">M7 14c-1.66 0-3 1.34-3 3 0 1.31-1.16 2-2 2 .92 1.22 2.49 2 4 2 2.21 0 4-1.79 4-4 0-1.66-1.34-3-3-3zm13.71-9.37-1.34-1.34a.996.996 0 0 0-1.41 0L9 12.25 11.75 15l8.96-8.96c.39-.39.39-1.02 0-1.41z</StreamGeometry>
             <conv:BoolToBrushConverter x:Key="SelectionBrush" />
         </ResourceDictionary>
     </Application.Resources>

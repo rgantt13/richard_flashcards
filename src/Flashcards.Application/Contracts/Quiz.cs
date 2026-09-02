@@ -3,10 +3,42 @@ using Flashcards.Domain.Cards;
 namespace Flashcards.Application.Contracts;
 
 /// <summary>
-/// What the user picked on the "start studying" screen.
+/// Which cards a mode draws, and in what order.
 /// <para>
-/// There is no due/new/ahead split any more: nothing schedules cards, so every card in the chosen
-/// subjects is equally eligible and the only questions left are which subjects and how many.
+/// This replaced a <c>HardestFirst</c> flag once there were more than two answers to the question.
+/// Nothing here schedules anything — every one of these is a way of ordering cards that are all
+/// equally eligible, so choosing a mode is choosing an emphasis rather than being told what is due.
+/// </para>
+/// </summary>
+public enum QuizDraw
+{
+    /// <summary>Shuffled. What Random and Custom use.</summary>
+    Random = 0,
+
+    /// <summary>
+    /// Weighted by how often you get each card wrong, with never-answered cards leading — the
+    /// cards you have most to gain from.
+    /// </summary>
+    HardestFirst = 1,
+
+    /// <summary>Only cards that have never been answered.</summary>
+    Untouched = 2,
+
+    /// <summary>
+    /// Only cards whose <em>most recent</em> answer was wrong, newest first. Deliberately not the
+    /// same as <see cref="HardestFirst"/>: that ranks by a lifetime average, so a card you have
+    /// finally learned still scores badly for a long time. This one is about what you fluffed
+    /// last, which is the thing worth another look today.
+    /// </summary>
+    RecentlyMissed = 3,
+}
+
+/// <summary>
+/// What the user picked on the "start studying" screen: which cards, how many, in what order.
+/// <para>
+/// Session behaviour that does not change <em>which</em> cards are drawn — the time limits, for
+/// instance — deliberately does not live here. Those never reach the database, so putting them on
+/// a query input would be describing something the handler cannot act on.
 /// </para>
 /// </summary>
 public sealed record QuizOptions
@@ -25,11 +57,14 @@ public sealed record QuizOptions
 
     public int MaxCards { get; init; } = 20;
 
+    public QuizDraw Draw { get; init; } = QuizDraw.Random;
+
     /// <summary>
-    /// Draw the cards answered wrong most often first, rather than at random. A way to lean on
-    /// weak spots when you want to — not a routine the app imposes.
+    /// Restricts the draw to card types the app can mark for you — multiple choice and cloze.
+    /// A standard or designed card is graded by the person answering it, which is exactly what a
+    /// timed drill has no room for.
     /// </summary>
-    public bool HardestFirst { get; init; }
+    public bool AutoGradedOnly { get; init; }
 
     /// <summary>Shuffle multiple-choice options each time the card is shown.</summary>
     public bool ShuffleChoices { get; init; } = true;

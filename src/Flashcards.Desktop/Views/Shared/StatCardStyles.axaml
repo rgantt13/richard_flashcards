@@ -1,0 +1,34 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--
+        The look the three stat cards share. Included by each of them rather than declared on
+        whichever panel is hosting them: a card that carries its own styles renders the same on the
+        Study prep screen and the Statistics panel, which is the point of having lifted them out of
+        one view in the first place.
+    -->
+
+    <!-- One statistic: a big number over a quiet label. -->
+    <Style Selector="StackPanel.figure > TextBlock:nth-child(1)">
+        <Setter Property="FontSize" Value="24" />
+        <Setter Property="FontWeight" Value="Bold" />
+    </Style>
+
+    <Style Selector="StackPanel.figure > TextBlock:nth-child(2)">
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="Opacity" Value="0.6" />
+    </Style>
+
+    <Style Selector="TextBlock.statLabel">
+        <Setter Property="FontSize" Value="10" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Opacity" Value="0.5" />
+    </Style>
+
+    <!-- All/None above a picker column. Housekeeping, not the point of the tier. -->
+    <Style Selector="Button.mini">
+        <Setter Property="Padding" Value="8,3" />
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="MinWidth" Value="0" />
+    </Style>
+</Styles>

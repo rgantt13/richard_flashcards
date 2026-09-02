@@ -334,3 +334,86 @@ public sealed class BoolToBrushConverter : IValueConverter
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         => throw new NotSupportedException();
 }
+
+/// <summary>
+/// Resolves a theme resource key held as a string — "SemiColorPrimary" — into the brush it names.
+/// <para>
+/// The study modes carry their accent as a key rather than a colour so the catalogue stays plain
+/// data with no dependency on Avalonia, and so a mode tile follows the theme like everything else.
+/// A key that does not resolve falls back to transparent rather than throwing: a missing stripe is
+/// a cosmetic problem, and a panel that will not render is not.
+/// </para>
+/// </summary>
+public sealed class ThemeBrushConverter : IValueConverter
+{
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is not string key || Avalonia.Application.Current is not { } app)
+        {
+            return Brushes.Transparent;
+        }
+
+        if (app.TryGetResource(key, app.ActualThemeVariant, out var found) && found is IBrush brush)
+        {
+            return brush;
+        }
+
+        // A literal "#RRGGBB" is accepted too. The theme's own tokens are preferred where one
+        // fits, but the study modes need seven distinguishable hues and the theme does not supply
+        // seven — and a key that silently resolves to nothing paints an invisible icon, which is
+        // exactly the failure this fallback exists to make impossible.
+        return Color.TryParse(key, out var colour) ? new SolidColorBrush(colour) : Brushes.Transparent;
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
+/// <summary>
+/// Resolves an icon resource key held as a string — "IconShuffle" — into the geometry it names.
+/// <para>
+/// The sibling of <see cref="ThemeBrushConverter"/>, and there for the same reason: the study mode
+/// catalogue and the navigation list are plain data, so they carry the <em>name</em> of an icon
+/// rather than a <c>Geometry</c> that would drag Avalonia into them. A key that does not resolve
+/// draws nothing, which loses an icon rather than a panel.
+/// </para>
+/// </summary>
+public sealed class IconGeometryConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => value is string key ? Resolve(key) : null;
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+
+    internal static Geometry? Resolve(string key)
+        => Avalonia.Application.Current is { } app
+           && app.TryGetResource(key, app.ActualThemeVariant, out var found)
+            ? found as Geometry
+            : null;
+}
+
+/// <summary>
+/// The icon for a card type, for the designer's type drop-down.
+/// <para>
+/// A sibling of <see cref="CardTypeNameConverter"/> rather than another column on some table: the
+/// mapping is four cases and belongs next to the one that supplies the names, so a new card type
+/// is two lines in one file instead of a lookup somebody forgets to extend.
+/// </para>
+/// </summary>
+public sealed class CardTypeIconConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => value is CardType type ? IconGeometryConverter.Resolve(KeyFor(type)) : null;
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+
+    private static string KeyFor(CardType type) => type switch
+    {
+        CardType.MultipleChoice => "IconCardChoice",
+        CardType.Cloze => "IconCardCloze",
+        CardType.Freeform => "IconCardFreeform",
+        _ => "IconCardStandard",
+    };
+}
