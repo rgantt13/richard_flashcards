@@ -81,6 +81,9 @@
             <StreamGeometry x:Key="IconStats">M5 9.2h3V19H5V9.2zM10.6 5h2.8v14h-2.8V5zm5.6 8H19v6h-2.8v-6z</StreamGeometry>
 
             <!-- Starting a sitting. -->
+            <!-- Generating something, rather than filing or finding it. -->
+            <StreamGeometry x:Key="IconSparkle">M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z</StreamGeometry>
+
             <StreamGeometry x:Key="IconPlay">M8 5v14l11-7z</StreamGeometry>
 
             <!--

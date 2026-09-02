@@ -48,15 +48,17 @@ internal sealed class BuildDeckExportHandler(IFlashcardReadStore cardStore, ISub
                 wanted.Add(tag.Id);
             }
 
-            cards.Add(new DeckCard(
-                detail.Id,
-                detail.Name,
-                detail.CardType,
-                detail.Notes,
-                detail.IsSuspended,
-                [.. tags.Select(t => t.Name)],
-                detail.Blocks,
-                detail.Choices));
+            cards.Add(new DeckCard
+            {
+                Id = detail.Id,
+                Name = detail.Name,
+                CardType = detail.CardType,
+                Notes = detail.Notes,
+                IsSuspended = detail.IsSuspended,
+                Subjects = [.. tags.Select(t => t.Name)],
+                Blocks = detail.Blocks,
+                Choices = detail.Choices,
+            });
         }
 
         // Ancestors last, over the full set, so a card's tag drags its own chain in too.

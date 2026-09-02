@@ -189,6 +189,16 @@ public sealed partial class ManagementViewModel : ViewModelBase
     });
 
     /// <summary>
+    /// Opens the prompt builder for making a deck with an assistant.
+    /// <para>
+    /// It sits beside Import because that is where it lands: the prompt produces a file, and this
+    /// panel is where a file becomes cards. The app itself never calls a model.
+    /// </para>
+    /// </summary>
+    [RelayCommand]
+    private Task GenerateDeckAsync() => RunAsync(() => _dialogs.GenerateDeckAsync(new GenerateDeckViewModel()));
+
+    /// <summary>
     /// Reads a deck file and brings the chosen part of it in. The file is parsed before the picker
     /// opens, so "that is not a deck" is answered straight away rather than after a selection.
     /// </summary>

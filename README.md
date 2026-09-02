@@ -69,7 +69,7 @@ can be a Markdown paragraph, then a C# snippet, then a screenshot.
 
 **Manage** — search by name or by anything written on either side, scope to a subject and everything
 under it, filter by type or by never-answered, sort, page. Per row: edit, forget (clear that card's
-answer history), suspend, delete. Import and Export live up here too.
+answer history), suspend, delete. Generate, Import and Export live up here too.
 
 **Statistics** — your record and nothing else: the whole library, the subjects that stand out, one
 subject at a time, one card at a time. Deliberately has no way to start a sitting.
@@ -163,6 +163,12 @@ cards are named so you can fix them.
 ---
 
 ## Sharing cards
+
+**Generate** builds a prompt for making a deck with a language model and copies it to the
+clipboard. The app itself never calls a model — no key, no account, no network request — so you
+paste the prompt into whatever assistant you already use, save the answer as a `.fcdeck` file, and
+import it. The prompt and what to do when a deck comes back wrong are in
+[docs/generating-decks.md](docs/generating-decks.md).
 
 **Export** writes chosen subjects and cards to a `.fcdeck` file: readable JSON, with images inline
 and the subject tree carried as names rather than ids, so it rebuilds anywhere. **Import** shows the

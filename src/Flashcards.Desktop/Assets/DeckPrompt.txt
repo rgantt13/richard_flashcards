@@ -1,0 +1,168 @@
+You are generating a flashcard deck as a single JSON file for a desktop app called Flashcards.
+
+SUBJECT: <<SUBJECT>>
+HOW MANY CARDS: <<COUNT>>
+<<FOCUS>>
+
+Output ONLY the JSON. No prose before or after, no markdown fences, no comments. The whole reply
+must be a file I can save and import.
+
+## Shape
+
+{
+  "FormatVersion": 1,
+  "Subjects": [
+    { "Name": "string", "Parent": "string or omit", "ColorHex": "#RRGGBB or omit",
+      "Description": "string or omit" }
+  ],
+  "Cards": [
+    {
+      "Name": "string",
+      "CardType": "Standard | MultipleChoice | Cloze | Freeform",
+      "Notes": "string or omit",
+      "Subjects": ["subject name", "..."],
+      "Blocks": [
+        { "Face": "Question | Answer", "Ordinal": 0,
+          "Kind": "PlainText | Markdown | Code",
+          "Text": "string",
+          "Language": "csharp | sql | javascript | python | plaintext (Code blocks only)" }
+      ],
+      "Choices": [
+        { "Ordinal": 0, "Text": "string", "IsCorrect": true }
+      ]
+    }
+  ]
+}
+
+Every property not listed as required may be omitted. Always include "Choices": [] on cards that
+are not MultipleChoice.
+
+## Hard rules — a card breaking any of these is skipped on import
+
+- Every card needs a Name, at least one entry in Subjects, and at least one Question block.
+- Card names must be unique among cards sharing a subject. Make every name distinct anyway.
+- Every subject named by a card must also appear in the Subjects list.
+- Subject names are unique across the whole library and are matched case-insensitively.
+- Blocks are ordered by Ordinal within a Face, starting at 0.
+- Text blocks must not be empty.
+- Do NOT emit Image or Drawing blocks, and do NOT emit a "Media" array. There are no image bytes
+  to reference, and a card claiming an image it does not have is rejected.
+
+Per type:
+
+- Standard      needs at least one Answer block.
+- MultipleChoice needs 2 to 8 Choices, at least one correct AND at least one incorrect, and no
+                blank Choice text. Choices are auto-graded; put any explanation in an Answer block.
+- Cloze         needs at least one {{blank}} in a Question block, and NO Answer blocks at all.
+- Freeform      needs at least one element on BOTH faces, and every block must carry X, Y, Width
+                and Height on a 960 x 600 canvas (origin top-left, nothing smaller than 24).
+
+Limits: subject name 120 characters, card name 200, block text 20000, choice text 1000, 12 blocks
+per face.
+
+## Subjects
+
+Build a shallow tree, at most 5 levels deep. Put the topic at the top and give it 2 to 5 children
+that carve it into real areas, then tag each card with the MOST SPECIFIC subject that fits — a card
+tagged with a child automatically answers to its parents, so tagging both is redundant.
+
+Give each subject a distinct ColorHex.
+
+## Use the card types for what each is good at
+
+Do not spread the cards evenly for the sake of it. Choose the type that suits each fact, and let
+the mix fall where it falls. A rough target is a third Standard, a third Cloze, a quarter
+MultipleChoice and a couple of Freeform, but content wins over quota.
+
+- **Standard** — open recall, where the answer is prose: "why does X happen", "when would you
+  reach for Y", "explain the difference between A and B". Use it when a good answer is a sentence
+  or two rather than a single token. Markdown blocks are welcome; a short Code block on the answer
+  side is often the clearest possible answer.
+
+- **MultipleChoice** — discriminating between things that are easy to confuse. Its value is
+  entirely in the distractors: every wrong option must be something a learner might genuinely
+  believe. Options that are obviously silly teach nothing. Good for "which of these is valid
+  syntax", "which claim is false", "which tool fits this situation". Put the reasoning in an
+  Answer block — it is shown after grading as the explanation.
+
+- **Cloze** — exact recall inside its context: syntax, signatures, key terms, numbers. Write a
+  real sentence and blank the load-bearing word. `{{like this}}`, or `{{like this::with a hint}}`.
+  Blank one or two things per card, never a whole clause — a card with half its words blanked is
+  a card nobody can answer. Excellent for code: put the snippet in a Code block and blank the
+  keyword that matters.
+
+- **Freeform** — only where position carries meaning: a labelled diagram, a timeline, a
+  two-by-two, layers of a stack. Lay elements out on the canvas so the arrangement itself is the
+  point. If you would be placing one text box in the middle, use a Standard card instead.
+
+## Quality
+
+- Each card tests ONE thing. If an answer needs "and", it is probably two cards.
+- Prefer understanding over trivia. "What year was X released" is weak; "what problem does X
+  solve that Y did not" is strong.
+- Vary difficulty: some recall, some application, some comparison.
+- No card should be answerable from the wording of the question alone.
+- Use Notes for a caveat or a source, not for the answer.
+
+## Worked examples, one per type
+
+{
+  "Name": "Why WAL mode helps concurrent reads",
+  "CardType": "Standard",
+  "Subjects": ["SQLite"],
+  "Blocks": [
+    { "Face": "Question", "Ordinal": 0, "Kind": "Markdown",
+      "Text": "Why does **WAL** mode let readers continue while a write is in progress?" },
+    { "Face": "Answer", "Ordinal": 0, "Kind": "Markdown",
+      "Text": "Writers append to a separate write-ahead log instead of modifying the database file, so readers keep seeing the last committed snapshot. One writer at a time still, but readers are never blocked by it." }
+  ],
+  "Choices": []
+}
+
+{
+  "Name": "Which SQLite statement is a valid upsert",
+  "CardType": "MultipleChoice",
+  "Subjects": ["SQLite"],
+  "Blocks": [
+    { "Face": "Question", "Ordinal": 0, "Kind": "PlainText",
+      "Text": "Which of these updates the row when card_id already exists?" },
+    { "Face": "Answer", "Ordinal": 0, "Kind": "Markdown",
+      "Text": "SQLite has no `MERGE`. The upsert clause is `ON CONFLICT (col) DO UPDATE SET`, and `excluded` is the pseudo-table holding the row that would have been inserted." }
+  ],
+  "Choices": [
+    { "Ordinal": 0, "Text": "INSERT INTO t (id, v) VALUES (@id, @v) ON CONFLICT (id) DO UPDATE SET v = excluded.v", "IsCorrect": true },
+    { "Ordinal": 1, "Text": "MERGE INTO t USING ... WHEN MATCHED THEN UPDATE", "IsCorrect": false },
+    { "Ordinal": 2, "Text": "INSERT INTO t (id, v) VALUES (@id, @v) ON DUPLICATE KEY UPDATE v = @v", "IsCorrect": false },
+    { "Ordinal": 3, "Text": "UPSERT INTO t (id, v) VALUES (@id, @v)", "IsCorrect": false }
+  ]
+}
+
+{
+  "Name": "Enabling foreign keys",
+  "CardType": "Cloze",
+  "Subjects": ["SQLite"],
+  "Blocks": [
+    { "Face": "Question", "Ordinal": 0, "Kind": "PlainText",
+      "Text": "SQLite enforces foreign keys only after {{PRAGMA foreign_keys = ON}}, and the setting applies per {{connection::not per database}}." }
+  ],
+  "Choices": []
+}
+
+{
+  "Name": "Where WAL files sit relative to the database",
+  "CardType": "Freeform",
+  "Subjects": ["SQLite"],
+  "Blocks": [
+    { "Face": "Question", "Ordinal": 0, "Kind": "PlainText", "Text": "Name the three files WAL mode keeps, and what each holds.",
+      "X": 80, "Y": 60, "Width": 800, "Height": 90 },
+    { "Face": "Answer", "Ordinal": 0, "Kind": "Markdown", "Text": "**app.db**\n\nCommitted pages",
+      "X": 60, "Y": 180, "Width": 260, "Height": 160 },
+    { "Face": "Answer", "Ordinal": 1, "Kind": "Markdown", "Text": "**app.db-wal**\n\nCommitted-but-not-yet-checkpointed pages",
+      "X": 350, "Y": 180, "Width": 260, "Height": 160 },
+    { "Face": "Answer", "Ordinal": 2, "Kind": "Markdown", "Text": "**app.db-shm**\n\nShared index into the WAL",
+      "X": 640, "Y": 180, "Width": 260, "Height": 160 }
+  ],
+  "Choices": []
+}
+
+Now generate the deck. Output only the JSON.
