@@ -1,7 +1,11 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Flashcards.Application.Abstractions.Messaging;
+using Flashcards.Application.Contracts;
+using Flashcards.Application.Stats.Queries;
 using Flashcards.Desktop.ViewModels.Design;
 using Flashcards.Desktop.ViewModels.Manage;
+using Flashcards.Desktop.ViewModels.Settings;
 using Flashcards.Desktop.ViewModels.Shared;
 using Flashcards.Desktop.ViewModels.Statistics;
 using Flashcards.Desktop.ViewModels.Study;
@@ -34,16 +38,22 @@ public sealed record NavigationItem(string Key, string Title, string IconKey);
 /// </summary>
 public sealed partial class MainWindowViewModel : ViewModelBase
 {
+    private readonly IDispatcher _dispatcher;
+
     public MainWindowViewModel(
+        IDispatcher dispatcher,
         CardEditorViewModel editor,
         ManagementViewModel management,
         QuizViewModel quiz,
-        StatisticsViewModel statistics)
+        StatisticsViewModel statistics,
+        SettingsViewModel settings)
     {
+        _dispatcher = dispatcher;
         Editor = editor;
         Management = management;
         Quiz = quiz;
         Statistics = statistics;
+        AppSettings = settings;
 
         // Clicking Edit on a search result opens the designer loaded with that card.
         Management.EditRequested += async (_, id) =>
@@ -67,6 +77,9 @@ public sealed partial class MainWindowViewModel : ViewModelBase
 
     public StatisticsViewModel Statistics { get; }
 
+    /// <summary>Named to avoid colliding with the Settings contract record.</summary>
+    public SettingsViewModel AppSettings { get; }
+
     // Subjects lost its panel when it became a tag: you type one into the designer rather than
     // maintaining a list of them, and an unused tag retires itself.
 
@@ -76,6 +89,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         new("editor", "Design",     "IconEdit"),
         new("manage", "Manage",     "IconManage"),
         new("stats",  "Statistics", "IconStats"),
+        new("settings", "Settings",  "IconSettings"),
     ];
 
     [ObservableProperty]
@@ -83,6 +97,21 @@ public sealed partial class MainWindowViewModel : ViewModelBase
 
     [ObservableProperty]
     private ViewModelBase _currentPanel;
+
+    /// <summary>
+    /// The library's headline figures, shown at the foot of the sidebar.
+    /// <para>
+    /// The sidebar carries this rather than leaving four hundred pixels of empty column: how much
+    /// you have done today is the one number you want visible from wherever you happen to be, and
+    /// it is the only thing here that is true on every panel.
+    /// </para>
+    /// </summary>
+    [ObservableProperty]
+    private OverallStats? _overall;
+
+    public string TodayAccuracy => Overall is { StudiedToday: true } stats
+        ? $"{stats.Today.Accuracy:P0}"
+        : "-";
 
     public async Task InitializeAsync() => await ShowAsync(SelectedNavigation);
 
@@ -93,11 +122,35 @@ public sealed partial class MainWindowViewModel : ViewModelBase
             "editor" => (ViewModelBase)Editor,
             "manage" => Management,
             "stats" => Statistics,
+            "settings" => AppSettings,
             _ => Quiz,
         };
 
         CurrentPanel = panel;
         await panel.ActivateAsync();
+        await RefreshFooterAsync();
+    }
+
+    /// <summary>
+    /// Reloads the sidebar figures.
+    /// <para>
+    /// Driven by moving between panels rather than by a timer or a push from the quiz: leaving a
+    /// sitting is the moment the numbers have changed and the moment you are looking at the
+    /// sidebar again, so one refresh there covers it without anything having to notify anything.
+    /// </para>
+    /// </summary>
+    private async Task RefreshFooterAsync()
+    {
+        try
+        {
+            Overall = await _dispatcher.QueryAsync(new GetOverallStatsQuery());
+            OnPropertyChanged(nameof(TodayAccuracy));
+        }
+        catch (Exception exception)
+        {
+            // A sidebar figure is not worth taking the window down for.
+            ErrorMessage = exception.Message;
+        }
     }
 
     [RelayCommand]

@@ -30,6 +30,19 @@ public sealed record OverallStats(
     DateTimeOffset? LastAnsweredUtc)
 {
     public int CardsUntouched => Math.Max(TotalCards - CardsPractised, 0);
+
+    /// <summary>
+    /// Just today's answers, counted from local midnight.
+    /// <para>
+    /// Carried on the same record rather than fetched separately because it comes off the same
+    /// table in the same round trip, and because everywhere that wants "how am I doing" wants both
+    /// the lifetime figure and the one for the session you are actually in.
+    /// </para>
+    /// </summary>
+    public PracticeStats Today { get; init; } = PracticeStats.Empty;
+
+    /// <summary>Whether anything has been answered since midnight. Drives the sidebar's placeholder.</summary>
+    public bool StudiedToday => Today.Answered > 0;
 }
 
 /// <summary>

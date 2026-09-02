@@ -6,6 +6,7 @@ using Flashcards.Application.Abstractions.Messaging;
 using Flashcards.Application.Contracts;
 using Flashcards.Application.Quiz.Commands;
 using Flashcards.Application.Quiz.Queries;
+using Flashcards.Application.Settings.Queries;
 using Flashcards.Desktop.ViewModels.Shared;
 using Flashcards.Desktop.ViewModels.StudySetup;
 using Flashcards.Domain.Cards;
@@ -234,8 +235,15 @@ public sealed partial class QuizViewModel : ViewModelBase
         ErrorMessage = null;
         StatusMessage = null;
 
-        // The mode's own preferences are defaults, not locks — every one of them is still a
-        // control on the screen you are about to see.
+        // Your saved defaults are the starting point, read fresh so a change on the settings
+        // panel takes effect on the next mode you pick rather than the next time you launch.
+        var settings = await _dispatcher.QueryAsync(new GetSettingsQuery());
+
+        CardCount = settings.DefaultCardCount;
+        ShuffleChoices = settings.ShuffleChoices;
+
+        // The mode's own preferences then override the two it has an opinion about. Neither is a
+        // lock — every one of them is still a control on the screen you are about to see.
         AutoGradedOnly = card.PrefersAutoGraded;
         QuestionLimit = QuestionLimits.First(q => q.Value == (card.PrefersTimed ? 20 : 0));
         SessionLimit = SessionLimits[0];

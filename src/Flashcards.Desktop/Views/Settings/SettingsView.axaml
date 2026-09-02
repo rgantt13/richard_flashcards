@@ -1,0 +1,197 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:Flashcards.Desktop.ViewModels.Settings"
+             xmlns:contracts="clr-namespace:Flashcards.Application.Contracts;assembly=Flashcards.Application"
+             x:DataType="vm:SettingsViewModel"
+             x:Class="Flashcards.Desktop.Views.Settings.SettingsView">
+
+    <!--
+        Preferences, where things are kept, and the two destructive buttons.
+
+        There is no Apply. Every control saves as you touch it, and the theme applies before it
+        saves so picking one is its own preview — with four settings, a staged edit you can abandon
+        would be more machinery than the thing it protects.
+    -->
+
+    <UserControl.Styles>
+        <Style Selector="TextBlock.sectionLabel">
+            <Setter Property="FontSize" Value="10" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Opacity" Value="0.5" />
+            <Setter Property="Margin" Value="0,0,0,10" />
+        </Style>
+
+        <Style Selector="TextBlock.hint">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Opacity" Value="0.5" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+
+        <!-- Read-only, selectable, and monospaced: it is a path somebody will want to copy. -->
+        <Style Selector="TextBox.path">
+            <Setter Property="IsReadOnly" Value="True" />
+            <Setter Property="FontFamily" Value="Consolas, Menlo, monospace" />
+            <Setter Property="FontSize" Value="12" />
+        </Style>
+
+        <Style Selector="Border.danger">
+            <Setter Property="BorderBrush" Value="{DynamicResource SemiColorDanger}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="18,16" />
+        </Style>
+    </UserControl.Styles>
+
+    <DockPanel Margin="28,24">
+
+        <StackPanel DockPanel.Dock="Top" Spacing="3" Margin="0,0,0,16">
+            <TextBlock Text="Settings" Classes="h1" />
+            <TextBlock Text="Everything here saves as you change it." Classes="muted" />
+        </StackPanel>
+
+        <StackPanel DockPanel.Dock="Bottom" Spacing="2" Margin="0,12,0,0">
+            <TextBlock Text="{Binding ErrorMessage}"
+                       Foreground="{DynamicResource SemiColorDanger}" TextWrapping="Wrap"
+                       IsVisible="{Binding ErrorMessage, Converter={StaticResource NotNull}}" />
+            <TextBlock Text="{Binding StatusMessage}" Classes="muted"
+                       IsVisible="{Binding StatusMessage, Converter={StaticResource NotNull}}" />
+        </StackPanel>
+
+        <ScrollViewer>
+            <StackPanel Spacing="14" MaxWidth="760" HorizontalAlignment="Left">
+
+                <!-- ····· appearance ····· -->
+                <Border Classes="card" Padding="18,16">
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="APPEARANCE" Classes="sectionLabel" />
+
+                        <!--
+                            Written out rather than generated from a list: a two-way enum binding
+                            needs the value as a ConverterParameter, and a parameter cannot come
+                            from the item being templated. This is the same pattern the import
+                            dialog uses for its conflict setting.
+                        -->
+                        <StackPanel Margin="0,0,0,4">
+                            <RadioButton GroupName="theme" Content="Follow the system"
+                                         IsChecked="{Binding Theme, Mode=TwoWay,
+                                                     Converter={StaticResource EnumToBool},
+                                                     ConverterParameter={x:Static contracts:ThemePreference.System}}" />
+                            <TextBlock Text="Changes with your Windows setting, while the app is open."
+                                       Classes="hint" Margin="26,1,0,8" />
+
+                            <RadioButton GroupName="theme" Content="Light"
+                                         IsChecked="{Binding Theme, Mode=TwoWay,
+                                                     Converter={StaticResource EnumToBool},
+                                                     ConverterParameter={x:Static contracts:ThemePreference.Light}}" />
+                            <TextBlock Text="A pale background, whatever Windows is set to."
+                                       Classes="hint" Margin="26,1,0,8" />
+
+                            <RadioButton GroupName="theme" Content="Dark"
+                                         IsChecked="{Binding Theme, Mode=TwoWay,
+                                                     Converter={StaticResource EnumToBool},
+                                                     ConverterParameter={x:Static contracts:ThemePreference.Dark}}" />
+                            <TextBlock Text="The one this was designed against."
+                                       Classes="hint" Margin="26,1,0,0" />
+                        </StackPanel>
+
+                        <TextBlock Classes="hint"
+                                   Text="The app was designed against the dark theme; the light one is Semi's and has had less attention." />
+                    </StackPanel>
+                </Border>
+
+                <!-- ····· study defaults ····· -->
+                <Border Classes="card" Padding="18,16">
+                    <StackPanel Spacing="14">
+                        <TextBlock Text="STUDY DEFAULTS" Classes="sectionLabel" />
+
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Cards per sitting" />
+                            <!--
+                                A fixed width, not MaxWidth with Left alignment. A star column
+                                inside a grid that sizes to its content has nothing to take a share
+                                of, so the slider collapsed to its thumb.
+                            -->
+                            <Grid ColumnDefinitions="*,14,Auto" Width="420" HorizontalAlignment="Left">
+                                <Slider Grid.Column="0" Minimum="5" Maximum="100" TickFrequency="5"
+                                        IsSnapToTickEnabled="True"
+                                        Value="{Binding DefaultCardCount, Mode=TwoWay}" />
+                                <TextBlock Grid.Column="2" Text="{Binding DefaultCardCount}"
+                                           VerticalAlignment="Center" FontWeight="SemiBold" Width="34" />
+                            </Grid>
+                            <TextBlock Classes="hint"
+                                       Text="What the count starts at when you pick a study mode. You can still change it there." />
+                        </StackPanel>
+
+                        <StackPanel Spacing="2">
+                            <CheckBox Content="Shuffle multiple-choice options"
+                                      IsChecked="{Binding ShuffleChoices, Mode=TwoWay}" />
+                            <TextBlock Classes="hint" Margin="26,0,0,0"
+                                       Text="Reorders the answers each time a card is shown, so you learn the answer rather than its position." />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- ····· where things are ····· -->
+                <Border Classes="card" Padding="18,16">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="YOUR LIBRARY" Classes="sectionLabel" />
+
+                        <Grid ColumnDefinitions="*,12,Auto">
+                            <TextBox Grid.Column="0" Classes="path" Text="{Binding DataDirectory, Mode=OneWay}" />
+                            <Button Grid.Column="2" Content="Open folder"
+                                    VerticalAlignment="Stretch"
+                                    Command="{Binding OpenDataFolderCommand}" />
+                        </Grid>
+
+                        <TextBlock Classes="hint"
+                                   Text="Your cards, images and these settings all live here. Copy this folder to move the app to another machine, or to keep a backup." />
+
+                        <!--
+                            Says where the folder came from. An app pointed somewhere else by an
+                            environment variable looks exactly like an app that has lost your
+                            cards, so the override announces itself rather than being a mystery.
+                        -->
+                        <Border Background="{DynamicResource SemiColorFill1}"
+                                CornerRadius="6" Padding="10,7"
+                                IsVisible="{Binding IsDataDirectoryOverridden}">
+                            <TextBlock Text="{Binding DataDirectorySource}" Classes="hint" />
+                        </Border>
+
+                        <TextBlock Text="{Binding DataDirectorySource}" Classes="hint"
+                                   IsVisible="{Binding !IsDataDirectoryOverridden}" />
+                    </StackPanel>
+                </Border>
+
+                <!-- ····· destructive ····· -->
+                <Border Classes="danger">
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="FORGET EVERYTHING" Classes="sectionLabel" />
+
+                        <TextBlock Classes="hint"
+                                   Text="Sets every percentage in the app back to zero, as though nothing had ever been answered. Your cards, subjects and images are untouched — this is only the answer history." />
+
+                        <Button Classes="Danger" HorizontalAlignment="Left"
+                                Content="Forget every answer"
+                                Command="{Binding ClearHistoryCommand}" />
+                    </StackPanel>
+                </Border>
+
+                <!-- ····· about ····· -->
+                <Border Classes="card" Padding="18,16">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="ABOUT" Classes="sectionLabel" />
+
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <TextBlock Text="Flashcards" FontWeight="SemiBold" />
+                            <TextBlock Text="{Binding Version}" Classes="muted" VerticalAlignment="Center" />
+                        </StackPanel>
+
+                        <Button Content="View the source on GitHub" HorizontalAlignment="Left"
+                                Command="{Binding OpenRepositoryCommand}" />
+                    </StackPanel>
+                </Border>
+
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+</UserControl>

@@ -26,6 +26,21 @@ dotnet run --project src\Flashcards.Desktop
 First launch creates `%APPDATA%\RichardFlashcards\flashcards.db`, applies both migrations, and
 seeds four sample cards across two subjects so nothing is empty.
 
+### Running against a different library
+
+`FLASHCARDS_DATA_DIR` moves the whole library — database, images and `settings.json` — somewhere
+else for that run. Point it at an empty folder and the app builds a fresh seeded library there,
+leaving your real cards alone:
+
+```powershell
+$env:FLASHCARDS_DATA_DIR = "$env:TEMP\flashcards-scratch"; dotnet run --project src\Flashcards.Desktop
+```
+
+Worth reaching for before anything destructive — importing a deck you have not seen, clearing all
+history, or a timed drill that records real answers. The Settings panel always shows which folder
+is in use and says when the variable is what put it there, so a stray value is visible rather than
+a mystery. A blank or unusable value falls back to the default folder.
+
 Both test projects declare `<Using Include="Xunit" />`, so test files need no `using Xunit;` of
 their own — xunit v2 ships no global usings and `ImplicitUsings` does not cover it.
 
