@@ -68,8 +68,9 @@ are in and tints the panel to match. Each face of a card is an ordered list of b
 can be a Markdown paragraph, then a C# snippet, then a screenshot.
 
 **Manage** — search by name or by anything written on either side, scope to a subject and everything
-under it, filter by type or by never-answered, sort, page. Per row: edit, forget (clear that card's
-answer history), suspend, delete. Generate, Import and Export live up here too.
+under it, filter by type, sort either way, page. Everything you own is in the list, suspended cards
+included. Per row: edit, forget (clear that card's answer history), suspend, delete. Generate,
+Import and Export live up here too.
 
 **Statistics** — your record and nothing else: the whole library, the subjects that stand out, one
 subject at a time, one card at a time. Deliberately has no way to start a sitting.
