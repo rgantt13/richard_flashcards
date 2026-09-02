@@ -47,6 +47,14 @@
             <Setter Property="FontSize" Value="11" />
             <Setter Property="Opacity" Value="0.45" />
         </Style>
+
+        <!-- The heatmap's key: the same four steps its squares are drawn in. -->
+        <Style Selector="Border.legend">
+            <Setter Property="Width" Value="11" />
+            <Setter Property="Height" Value="11" />
+            <Setter Property="CornerRadius" Value="2" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
     </UserControl.Styles>
 
     <DockPanel Margin="28,24">
@@ -62,10 +70,88 @@
                    IsVisible="{Binding ErrorMessage, Converter={StaticResource NotNull}}" />
 
         <ScrollViewer>
-            <StackPanel Spacing="14">
+            <StackPanel x:Name="Tiers" Spacing="14">
 
                 <!-- tier 0: the whole library -->
                 <shared:OverallStatsCard DataContext="{Binding Browser}" />
+
+                <!--
+                    tier 0.25: the year, by day.
+
+                    Every other figure on this panel is a lifetime total or today's, which between
+                    them cannot answer the question that decides whether any of this works: are you
+                    still turning up. That is a shape, not a number, so it is drawn.
+                -->
+                <Border Classes="card" Padding="18,16">
+                    <StackPanel Spacing="14">
+                        <TextBlock Text="TURNING UP" Classes="statLabel" />
+
+                        <UniformGrid Columns="4">
+                            <Border Classes="highlight" Margin="0,0,10,0">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="CURRENT STREAK" Classes="highlightWhat" />
+                                    <TextBlock Text="{Binding CurrentStreakFigure}" Classes="highlightWho"
+                                               Foreground="{DynamicResource SemiColorSuccess}" />
+                                    <TextBlock Text="{Binding CurrentStreakDetail}" Classes="highlightDetail" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Classes="highlight" Margin="0,0,10,0">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="LONGEST STREAK" Classes="highlightWhat" />
+                                    <TextBlock Text="{Binding LongestStreakFigure}" Classes="highlightWho" />
+                                    <TextBlock Text="{Binding LongestStreakDetail}" Classes="highlightDetail" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Classes="highlight" Margin="0,0,10,0">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="DAYS STUDIED" Classes="highlightWhat" />
+                                    <TextBlock Text="{Binding DaysStudiedFigure}" Classes="highlightWho" />
+                                    <TextBlock Text="{Binding DaysStudiedDetail}" Classes="highlightDetail" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Classes="highlight">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="ANSWERS THIS YEAR" Classes="highlightWhat" />
+                                    <TextBlock Text="{Binding YearAnswersFigure}" Classes="highlightWho" />
+                                    <TextBlock Text="{Binding YearAnswersDetail}" Classes="highlightDetail" />
+                                </StackPanel>
+                            </Border>
+                        </UniformGrid>
+
+                        <!--
+                            The graph scrolls on its own when the window is narrow rather than
+                            squeezing: a squashed year is unreadable, and the recent end — which is
+                            the end you care about — is the one that survives at the right.
+                        -->
+                        <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                                      VerticalScrollBarVisibility="Disabled">
+                            <ctrl:StudyHeatmap x:Name="Graph"
+                                               History="{Binding Activity}"
+                                               HorizontalAlignment="Left"
+                                               Accent="{DynamicResource SemiColorPrimary}"
+                                               EmptyBrush="{DynamicResource SemiColorFill1}" />
+                        </ScrollViewer>
+
+                        <Grid ColumnDefinitions="*,Auto">
+                            <!-- What the square under the pointer says. Empty until you point at one. -->
+                            <TextBlock Grid.Column="0" Classes="highlightDetail" VerticalAlignment="Center"
+                                       Text="{Binding #Graph.HoverCaption}" />
+
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                            <TextBlock Text="quieter" Classes="highlightDetail" VerticalAlignment="Center" />
+                            <Border Classes="legend" Background="{DynamicResource SemiColorFill1}" />
+                            <Border Classes="legend" Background="{DynamicResource SemiColorPrimary}" Opacity="0.32" />
+                            <Border Classes="legend" Background="{DynamicResource SemiColorPrimary}" Opacity="0.55" />
+                            <Border Classes="legend" Background="{DynamicResource SemiColorPrimary}" Opacity="0.78" />
+                            <Border Classes="legend" Background="{DynamicResource SemiColorPrimary}" />
+                            <TextBlock Text="busier" Classes="highlightDetail" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Border>
 
                 <!--
                     tier 0.5: the subjects that stand out.
@@ -87,7 +173,15 @@
                             <Border Classes="highlight" Margin="0,0,10,0">
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="BIGGEST SUBJECT" Classes="highlightWhat" />
-                                    <TextBlock Text="{Binding Highlights.MostCards.Name}" Classes="highlightWho" />
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <ctrl:Identicon Variant="Subject" Width="22" Height="22"
+                                                        VerticalAlignment="Center"
+                                                        Seed="{Binding Highlights.MostCards.Id}"
+                                                        AccentHex="{Binding Highlights.MostCards.ColorHex}"
+                                                        IsVisible="{Binding Highlights.MostCards, Converter={StaticResource NotNull}}" />
+                                        <TextBlock Text="{Binding Highlights.MostCards.Name}" Classes="highlightWho"
+                                                   VerticalAlignment="Center" />
+                                    </StackPanel>
                                     <TextBlock Text="{Binding Highlights.MostCards.Figure}" Classes="highlightFigure" />
                                     <TextBlock Text="{Binding Highlights.MostCards.Detail}" Classes="highlightDetail" />
                                 </StackPanel>
@@ -96,7 +190,15 @@
                             <Border Classes="highlight" Margin="0,0,10,0">
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="MOST PRACTISED" Classes="highlightWhat" />
-                                    <TextBlock Text="{Binding Highlights.MostAnswered.Name}" Classes="highlightWho" />
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <ctrl:Identicon Variant="Subject" Width="22" Height="22"
+                                                        VerticalAlignment="Center"
+                                                        Seed="{Binding Highlights.MostAnswered.Id}"
+                                                        AccentHex="{Binding Highlights.MostAnswered.ColorHex}"
+                                                        IsVisible="{Binding Highlights.MostAnswered, Converter={StaticResource NotNull}}" />
+                                        <TextBlock Text="{Binding Highlights.MostAnswered.Name}" Classes="highlightWho"
+                                                   VerticalAlignment="Center" />
+                                    </StackPanel>
                                     <TextBlock Text="{Binding Highlights.MostAnswered.Figure}" Classes="highlightFigure" />
                                     <TextBlock Text="{Binding Highlights.MostAnswered.Detail}" Classes="highlightDetail" />
                                     <!-- The three practice-based tiles are blank until there is a record to rank. -->
@@ -108,8 +210,16 @@
                             <Border Classes="highlight" Margin="0,0,10,0">
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="STRONGEST" Classes="highlightWhat" />
-                                    <TextBlock Text="{Binding Highlights.BestAccuracy.Name}" Classes="highlightWho"
-                                               Foreground="{DynamicResource SemiColorSuccess}" />
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <ctrl:Identicon Variant="Subject" Width="22" Height="22"
+                                                        VerticalAlignment="Center"
+                                                        Seed="{Binding Highlights.BestAccuracy.Id}"
+                                                        AccentHex="{Binding Highlights.BestAccuracy.ColorHex}"
+                                                        IsVisible="{Binding Highlights.BestAccuracy, Converter={StaticResource NotNull}}" />
+                                        <TextBlock Text="{Binding Highlights.BestAccuracy.Name}" Classes="highlightWho"
+                                                   VerticalAlignment="Center"
+                                                   Foreground="{DynamicResource SemiColorSuccess}" />
+                                    </StackPanel>
                                     <TextBlock Text="{Binding Highlights.BestAccuracy.Figure}" Classes="highlightFigure" />
                                     <TextBlock Text="{Binding Highlights.BestAccuracy.Detail}" Classes="highlightDetail" />
                                     <!-- The three practice-based tiles are blank until there is a record to rank. -->
@@ -121,8 +231,16 @@
                             <Border Classes="highlight">
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="NEEDS THE MOST WORK" Classes="highlightWhat" />
-                                    <TextBlock Text="{Binding Highlights.NeedsWork.Name}" Classes="highlightWho"
-                                               Foreground="{DynamicResource SemiColorDanger}" />
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <ctrl:Identicon Variant="Subject" Width="22" Height="22"
+                                                        VerticalAlignment="Center"
+                                                        Seed="{Binding Highlights.NeedsWork.Id}"
+                                                        AccentHex="{Binding Highlights.NeedsWork.ColorHex}"
+                                                        IsVisible="{Binding Highlights.NeedsWork, Converter={StaticResource NotNull}}" />
+                                        <TextBlock Text="{Binding Highlights.NeedsWork.Name}" Classes="highlightWho"
+                                                   VerticalAlignment="Center"
+                                                   Foreground="{DynamicResource SemiColorDanger}" />
+                                    </StackPanel>
                                     <TextBlock Text="{Binding Highlights.NeedsWork.Figure}" Classes="highlightFigure" />
                                     <TextBlock Text="{Binding Highlights.NeedsWork.Detail}" Classes="highlightDetail" />
                                     <!-- The three practice-based tiles are blank until there is a record to rank. -->
@@ -135,8 +253,8 @@
                 </Border>
 
                 <!-- tiers 1 and 2, at a fixed height so the page scrolls as a whole -->
-                <shared:SubjectStatsCard Height="330" DataContext="{Binding Browser}" />
-                <shared:CardStatsCard    Height="330" DataContext="{Binding Browser}" />
+                <shared:SubjectStatsCard Height="272" DataContext="{Binding Browser}" />
+                <shared:CardStatsCard    Height="272" DataContext="{Binding Browser}" />
             </StackPanel>
         </ScrollViewer>
     </DockPanel>

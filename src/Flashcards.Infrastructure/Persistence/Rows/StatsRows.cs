@@ -41,3 +41,11 @@ internal sealed class CardStatsRow
     public int CorrectToday { get; init; }
     public double? AverageSeconds { get; init; }
 }
+
+internal sealed class DailyActivityRow
+{
+    /// <summary>"YYYY-MM-DD" as SQLite's date() produces it, parsed by the caller.</summary>
+    public string Day { get; init; } = "";
+    public int Answered { get; init; }
+    public int Correct { get; init; }
+}

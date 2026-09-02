@@ -44,14 +44,6 @@
         </Style>
 
         <!--
-            The headline infographic on a selection card, where the bar is the whole point of the
-            column rather than one detail in a row.
-        -->
-        <Style Selector="^.hero">
-            <Setter Property="Height" Value="22" />
-        </Style>
-
-        <!--
             The list-row version. A selection grid shows one of these per row, so it is deliberately
             hairline: enough to read the ratio out of the corner of your eye while scanning names,
             and not enough to compete with them.

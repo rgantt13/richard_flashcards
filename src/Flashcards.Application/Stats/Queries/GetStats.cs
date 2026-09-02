@@ -45,3 +45,21 @@ internal sealed class GetCardStatsHandler(IStatsReadStore store)
     public Task<CardStats> HandleAsync(GetCardStatsQuery query, CancellationToken cancellationToken)
         => store.GetCardStatsAsync(query.CardId, cancellationToken);
 }
+
+/// <summary>
+/// The answer history along a calendar, for the heatmap and the streak counters.
+/// <para>
+/// The window is a parameter rather than a constant because the two callers want different things
+/// from it: a year reads as "am I still turning up", a fortnight as "how is this week going". The
+/// default is a year plus the run-up to the start of its first week, so the grid the statistics
+/// panel draws begins on a Sunday without asking for days it will not show.
+/// </para>
+/// </summary>
+public sealed record GetActivityHistoryQuery(int Days = 371) : IQuery<ActivityHistory>;
+
+internal sealed class GetActivityHistoryHandler(IStatsReadStore store)
+    : IQueryHandler<GetActivityHistoryQuery, ActivityHistory>
+{
+    public Task<ActivityHistory> HandleAsync(GetActivityHistoryQuery query, CancellationToken cancellationToken)
+        => store.GetActivityHistoryAsync(query.Days, cancellationToken);
+}

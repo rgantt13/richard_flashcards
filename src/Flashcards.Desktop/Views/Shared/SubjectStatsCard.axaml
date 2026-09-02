@@ -31,60 +31,67 @@
                                    IsVisible="{Binding SubjectPicks.Count, Converter={StaticResource AnyItems}, ConverterParameter=invert}" />
 
                         <!--
-                            Two rows, and the mark spans neither. An earlier cut had the
-                            identicon spanning three auto rows, which left the grid distributing
-                            its height across them and opened a hand's width of dead space
-                            between the name and the bar. One row, sized by whichever of the two
-                            columns is taller, has no such freedom.
+                            One row: the mark, what you are looking at, and how it is going. The
+                            figures that used to sit in a second row underneath are inside the ring
+                            now, beside the segments they describe.
                         -->
                         <Grid IsVisible="{Binding FocusedSubject, Converter={StaticResource NotNull}}"
-                              ColumnDefinitions="Auto,18,*"
-                              RowDefinitions="Auto,18,Auto"
                               VerticalAlignment="Center">
 
-                            <ctrl:Identicon Grid.Row="0" Grid.Column="0"
+                            <!--
+                                The middle column is capped rather than sized to its text, so the
+                                ring lands in the same place whichever row you pick. Left to fit
+                                the name, it slid left and right as you moved down the list, which
+                                reads as the page twitching rather than as a selection changing.
+                                Still a star column underneath the cap, so a narrow window shrinks
+                                it instead of pushing the ring off the edge.
+                            -->
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="20" />
+                                <!--
+                                    Nearly all the star weight, so this column takes the free space
+                                    up to its cap and the sliver column at the end takes whatever
+                                    is left. An even split between two plain star columns would
+                                    hand half the room to the empty one.
+                                -->
+                                <ColumnDefinition Width="100*" MaxWidth="260" />
+                                <ColumnDefinition Width="24" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <ctrl:Identicon Grid.Column="0"
                                             Variant="Subject" Width="88" Height="88"
                                             VerticalAlignment="Center"
                                             Seed="{Binding FocusedSubject.Id}"
                                             AccentHex="{Binding FocusedSubject.ColorHex}" />
 
-                            <StackPanel Grid.Row="0" Grid.Column="2" Spacing="12" VerticalAlignment="Center">
-                                <StackPanel Spacing="4">
-                                    <TextBlock Text="{Binding FocusedSubject.Name}"
-                                               FontSize="21" FontWeight="Bold"
-                                               TextTrimming="CharacterEllipsis" />
-                                    <StackPanel Orientation="Horizontal" Spacing="14">
-                                        <TextBlock Classes="muted" Text="{Binding FocusedSubject.CardCountLabel}" />
-                                        <TextBlock Classes="muted"
-                                                   Text="{Binding FocusedSubject.CardsUntouched, StringFormat='{}{0} never answered'}" />
-                                    </StackPanel>
+                            <StackPanel Grid.Column="2" Spacing="4" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding FocusedSubject.Name}"
+                                           FontSize="21" FontWeight="Bold"
+                                           TextTrimming="CharacterEllipsis" />
+                                <StackPanel Orientation="Horizontal" Spacing="14">
+                                    <TextBlock Classes="muted" Text="{Binding FocusedSubject.CardCountLabel}" />
+                                    <TextBlock Classes="muted"
+                                               Text="{Binding FocusedSubject.CardsUntouched, StringFormat='{}{0} never answered'}" />
                                 </StackPanel>
-
-                                <ctrl:AccuracyBar Classes="hero"
-                                                  Correct="{Binding FocusedSubject.Practice.Correct}"
-                                                  Wrong="{Binding FocusedSubject.Practice.Wrong}" />
                             </StackPanel>
 
-                            <UniformGrid Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Columns="4">
-                                <StackPanel Classes="figure" Spacing="1">
-                                    <TextBlock Text="{Binding FocusedSubject.Practice.Accuracy, StringFormat='{}{0:P0}'}" />
-                                    <TextBlock Text="correct" />
-                                </StackPanel>
-                                <StackPanel Classes="figure" Spacing="1">
-                                    <TextBlock Text="{Binding FocusedSubject.Practice.Correct}"
-                                               Foreground="{DynamicResource SemiColorSuccess}" />
-                                    <TextBlock Text="right" />
-                                </StackPanel>
-                                <StackPanel Classes="figure" Spacing="1">
-                                    <TextBlock Text="{Binding FocusedSubject.Practice.Wrong}"
-                                               Foreground="{DynamicResource SemiColorDanger}" />
-                                    <TextBlock Text="wrong" />
-                                </StackPanel>
-                                <StackPanel Classes="figure" Spacing="1">
-                                    <TextBlock Text="{Binding FocusedSubject.Practice.Answered}" />
-                                    <TextBlock Text="answered" />
-                                </StackPanel>
-                            </UniformGrid>
+                            <!--
+                                The headline reading, opposite the mark. A ring rather than the bar
+                                the rows use: this is one value being read, not twenty being
+                                compared, and a ring has somewhere to put the number.
+                            -->
+                            <ctrl:AccuracyDonut Grid.Column="4"
+                                                VerticalAlignment="Center"
+                                                Correct="{Binding FocusedSubject.Practice.Correct}"
+                                                Wrong="{Binding FocusedSubject.Practice.Wrong}"
+                                                CorrectBrush="{DynamicResource SemiColorSuccess}"
+                                                WrongBrush="{DynamicResource SemiColorDanger}"
+                                                TrackBrush="{DynamicResource SemiColorFill1}"
+                                                TextBrush="{DynamicResource SemiColorText0}" />
+
                         </Grid>
                     </DockPanel>
 
@@ -94,19 +101,22 @@
                             <StackPanel Grid.Column="0" Spacing="1">
                                 <TextBlock Text="{Binding SubjectListLabel}" Classes="statLabel" />
                                 <TextBlock Classes="muted" FontSize="11"
-                                           Text="{Binding SelectedSubjectCount, StringFormat='{}{0} selected'}" />
+                                           Text="{Binding SubjectListHint}" />
                             </StackPanel>
 
-                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                            <!-- Nothing to select all of when the rows are only being read. -->
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4"
+                                        IsVisible="{Binding ShowsSelection}">
                                 <Button Classes="mini" Content="All" Command="{Binding SetAllSubjectsCommand}" CommandParameter="true" />
                                 <Button Classes="mini" Content="None" Command="{Binding SetAllSubjectsCommand}" CommandParameter="false" />
                             </StackPanel>
                         </Grid>
 
                         <!--
-                            Selecting a row shows it on the left; the checkbox is the separate
-                            gesture that puts it in the session. Two questions, two controls —
-                            the same split the card tier below already uses.
+                            Selecting a row shows it on the left. Where a session is being put
+                            together the checkbox beside it is the separate gesture that puts the
+                            subject in that session — two questions, two controls. On the statistics
+                            panel there is no second question, so the column is not there.
                         -->
                         <ListBox ItemsSource="{Binding SubjectPicks}"
                                  SelectedItem="{Binding FocusedSubject, Mode=TwoWay}"
@@ -123,6 +133,7 @@
                                     -->
                                     <Grid ColumnDefinitions="Auto,8,Auto,10,*,8,Auto" Margin="0,2">
                                         <CheckBox Grid.Column="0" VerticalAlignment="Center"
+                                                  IsVisible="{Binding $parent[UserControl].((vm:SubjectBrowserViewModel)DataContext).ShowsSelection}"
                                                   IsChecked="{Binding IsIncluded, Mode=TwoWay}" />
 
                                         <ctrl:Identicon Grid.Column="2" Variant="Subject"
