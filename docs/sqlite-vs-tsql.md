@@ -34,8 +34,14 @@ unreadable in a SQLite browser. `SqlMappings.Register()` pins both `Guid` and `D
 TEXT once, at startup.
 
 The ISO-8601 "O" format matters for a second reason: it sorts lexicographically in the same order
-it sorts chronologically. That is what makes `WHERE due_utc <= @Now` work on a TEXT column with no
-conversion and with an index still in play.
+it sorts chronologically. That is what makes `WHERE reviewed_utc >= @Since` work on a TEXT
+column with no conversion and with an index still in play — the app counts "answers today" that
+way (`StatsReadStore.GetOverallStatsAsync`).
+
+That only holds while every stored value carries the *same* offset. Values here are all written
+from `DateTimeOffset.UtcNow`, so they are all `+00:00`; a cutoff computed from local midnight must
+be converted with `ToUniversalTime()` before it is bound, or `2026-09-02T00:00:00.0000000-05:00`
+sorts nowhere near where you expect.
 
 ---
 
@@ -67,16 +73,16 @@ matter:
 
 ```sql
 -- T-SQL
-MERGE review_states AS target
-USING (VALUES (@CardId, @Lapses)) AS source (card_id, lapses)
+MERGE card_search AS target
+USING (VALUES (@CardId, @Text)) AS source (card_id, search_text)
 ON target.card_id = source.card_id
-WHEN MATCHED THEN UPDATE SET lapses = source.lapses
-WHEN NOT MATCHED THEN INSERT (card_id, lapses) VALUES (source.card_id, source.lapses);
+WHEN MATCHED THEN UPDATE SET search_text = source.search_text
+WHEN NOT MATCHED THEN INSERT (card_id, search_text) VALUES (source.card_id, source.search_text);
 
 -- SQLite
-INSERT INTO review_states (card_id, lapses)
-VALUES (@CardId, @Lapses)
-ON CONFLICT (card_id) DO UPDATE SET lapses = excluded.lapses;
+INSERT INTO card_search (card_id, search_text)
+VALUES (@CardId, @Text)
+ON CONFLICT (card_id) DO UPDATE SET search_text = excluded.search_text;
 ```
 
 Notes:
@@ -88,7 +94,10 @@ Notes:
 - There is no `OUTPUT` clause, but there **is** `RETURNING` (SQLite 3.35+), which behaves like
   PostgreSQL's.
 
-Real example: `ReviewStateRepository.UpsertAsync`.
+Real examples: the search-index triggers in `Migration002_SearchIndex.sql`, which keep `card_search`
+in step on every block edit. `SubjectRepository.DeleteAsync` uses the shorter `INSERT OR IGNORE`
+form when promoting cards to a parent subject, where a card that already wears the parent needs no
+update at all.
 
 ---
 
@@ -202,8 +211,9 @@ Two more differences worth knowing:
 - `@@ROWCOUNT` becomes the function `changes()`, and `SCOPE_IDENTITY()` becomes
   `last_insert_rowid()`.
 - The default bound-parameter limit is 999 (32766 since 3.32). Dapper's `IN @Ids` expansion emits
-  one parameter per element, so a large `IN` list needs chunking. `ReviewStateRepository.ResetAsync`
-  notes this.
+  one parameter per element, so a large `IN` list needs chunking. `ReviewLogRepository.ClearAsync`
+  notes this — and `ClearAllAsync` beside it exists to avoid the problem entirely, because "forget
+  every answer" is `DELETE FROM review_log` rather than every id in the library bound as a parameter.
 
 ---
 
