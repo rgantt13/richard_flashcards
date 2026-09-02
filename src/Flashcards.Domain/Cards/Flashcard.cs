@@ -4,10 +4,14 @@ using Flashcards.Domain.Common;
 namespace Flashcards.Domain.Cards;
 
 /// <summary>
-/// The aggregate root. A card owns its content blocks and its multiple-choice options —
-/// nothing outside the aggregate may hold a reference to them or mutate them directly.
-/// Review scheduling lives in a separate aggregate (<c>ReviewState</c>) because it changes
-/// on a completely different cadence: content changes rarely, scheduling changes every review.
+/// The aggregate root. A card owns its content blocks and its multiple-choice options — nothing
+/// outside the aggregate may hold a reference to them or mutate them directly.
+/// <para>
+/// A card carries no answer history. Every answer is an append-only
+/// <see cref="Flashcards.Domain.Practice.ReviewRecord"/>, and every figure the app shows is an
+/// aggregate over those. There used to be a <c>ReviewState</c> aggregate beside this one holding a
+/// due date and an ease factor; nothing is scheduled any more, so there is no state to keep.
+/// </para>
 /// </summary>
 public sealed class Flashcard : Entity, IAggregateRoot
 {

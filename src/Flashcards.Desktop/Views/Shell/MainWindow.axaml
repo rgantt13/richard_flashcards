@@ -39,7 +39,12 @@
 
                 <StackPanel DockPanel.Dock="Top" Margin="20,0,20,22" Spacing="3">
                     <TextBlock Text="Flashcards" FontSize="21" FontWeight="Bold" />
-                    <TextBlock Text="spaced repetition, locally" Classes="muted" />
+                    <!--
+                        Not "spaced repetition" any more. Nothing is scheduled — you pick a mode
+                        and study when you feel like it — so the old tagline was advertising the
+                        one feature the app deliberately removed.
+                    -->
+                    <TextBlock Text="study when you like, locally" Classes="muted" />
                 </StackPanel>
 
                 <!--
