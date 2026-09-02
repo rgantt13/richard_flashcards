@@ -220,13 +220,11 @@
             The footer pair. Same reactive treatment as the Study panel's start buttons: lift on
             hover, settle on press, fade when there is nothing to do.
         -->
+        <!-- Size comes from the shared footer classes; this is only what makes it the commit. -->
         <Style Selector="Button.commit">
-            <Setter Property="MinWidth" Value="132" />
             <Setter Property="Padding" Value="18,10" />
             <Setter Property="FontSize" Value="14" />
             <Setter Property="FontWeight" Value="Bold" />
-            <Setter Property="CornerRadius" Value="9" />
-            <Setter Property="HorizontalContentAlignment" Value="Center" />
             <Setter Property="Background" Value="{DynamicResource SemiColorPrimary}" />
             <Setter Property="BorderBrush" Value="{DynamicResource SemiColorPrimary}" />
             <Setter Property="BorderThickness" Value="1" />
@@ -235,6 +233,14 @@
         <!-- Pinned white: the fill is saturated, so the label should not follow the theme. -->
         <Style Selector="Button.commit TextBlock">
             <Setter Property="Foreground" Value="White" />
+        </Style>
+
+        <!--
+            And the glyph with it. The shared icon rule fills from the button's Foreground, which is
+            the right default everywhere except on top of a saturated fill like this one.
+        -->
+        <Style Selector="Button.commit Path">
+            <Setter Property="Fill" Value="White" />
         </Style>
 
         <Style Selector="Button.discard">
@@ -750,13 +756,12 @@
                 </StackPanel>
 
                 <!-- Create is the point of the screen, so it is the wide, coloured one. -->
-                <Button Grid.Column="4" Classes="commit"
+                <Button Grid.Column="4" Classes="commit iconText footer commits"
                         AutomationProperties.Name="{Binding SaveLabel}"
                         Command="{Binding SaveCommand}">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
+                    <StackPanel>
                         <TextBlock Text="{Binding SaveLabel}" />
-                        <Path Data="{StaticResource IconCheck}" Width="15" Height="15" Stretch="Uniform"
-                              VerticalAlignment="Center" Fill="White" />
+                        <Path Data="{StaticResource IconCheck}" />
                     </StackPanel>
                 </Button>
 

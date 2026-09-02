@@ -160,6 +160,80 @@
             <Setter Property="FontSize" Value="12" />
         </Style>
 
+        <!--
+            ····· a button that carries a glyph beside its label ·····
+
+            Every one of them in the app, so the repeated parts live here and each button's markup
+            is just the geometry and the word. The rules are keyed off the shape of the content, so
+            a button reads the same whether the glyph leads (Import) or trails (Next) — which is
+            what lets Previous and Next point the way they actually go.
+
+            This used to sit in ManagementView, which is where it was written and not where it was
+            only used: the study prep footer asked for the class too and got nothing, so its Back
+            carried a 13px glyph beside a regular-weight label while the Study opposite it carried a
+            15px glyph beside a semibold one. Two buttons in one row, sized by two different hands.
+
+            Fill follows the button's own Foreground rather than being set to a colour, so a
+            disabled or hovered button takes its glyph with it. That is the same trick the row
+            action icons on the manage grid use.
+
+            Semi's coloured variants are the exception: Danger and Success tint the label without
+            touching the button's Foreground, so those two pin their glyph themselves — see the
+            grading bar in QuizSessionView.
+        -->
+        <Style Selector="Button.iconText > StackPanel">
+            <Setter Property="Orientation" Value="Horizontal" />
+            <Setter Property="Spacing" Value="8" />
+        </Style>
+
+        <Style Selector="Button.iconText > StackPanel > Path">
+            <Setter Property="Width" Value="14" />
+            <Setter Property="Height" Value="14" />
+            <Setter Property="Stretch" Value="Uniform" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Fill" Value="{Binding $parent[Button].Foreground}" />
+        </Style>
+
+        <!--
+            A filled glyph carries far more ink than a stroked one at the same size. A solid play
+            triangle beside "Study" and a hairline chevron beside "Back" were both 14 across and
+            the pair still looked mismatched — the triangle fills its box, the chevron draws two
+            thin strokes across it. Solid marks get a smaller box so the two weigh the same.
+        -->
+        <Style Selector="Button.iconText.solidGlyph > StackPanel > Path">
+            <Setter Property="Width" Value="11" />
+            <Setter Property="Height" Value="11" />
+        </Style>
+
+        <Style Selector="Button.iconText > StackPanel > TextBlock">
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <!--
+            ····· the row of actions at the foot of a panel or a dialog ·····
+
+            One height and one minimum width for every one of them, because they sit side by side
+            and a pair that differs by two pixels reads as a mistake rather than as emphasis. Each
+            panel used to size its own: the study prep screen had a 42-tall Study beside a Back at
+            whatever the theme gives, the deck dialogs had 92 and 110, and the subject dialog 88 and
+            104. Emphasis is the job of Primary and of a wider MinWidth on the button that commits,
+            not of an odd height.
+        -->
+        <Style Selector="Button.footer">
+            <Setter Property="Height" Value="40" />
+            <Setter Property="MinWidth" Value="112" />
+            <Setter Property="CornerRadius" Value="9" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+
+        <!-- The one that commits is the wider of the pair. -->
+        <Style Selector="Button.footer.commits">
+            <Setter Property="MinWidth" Value="150" />
+        </Style>
+
         <Style Selector="Border.card">
             <Setter Property="Background" Value="{DynamicResource SemiColorBackground1}" />
             <Setter Property="BorderBrush" Value="{DynamicResource SemiColorBorder}" />
