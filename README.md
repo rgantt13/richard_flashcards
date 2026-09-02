@@ -72,8 +72,9 @@ under it, filter by type, sort either way, page. Everything you own is in the li
 included. Per row: edit, forget (clear that card's answer history), suspend, delete. Generate,
 Import and Export live up here too.
 
-**Statistics** — your record and nothing else: the whole library, the subjects that stand out, one
-subject at a time, one card at a time. Deliberately has no way to start a sitting.
+**Statistics** — your record and nothing else: the whole library, a year of answering by day, the
+subjects that stand out, one subject at a time, one card at a time. Deliberately has no way to
+start a sitting.
 
 **Settings** — theme, study defaults, where your library lives, and a way to forget every answer.
 Everything saves as you change it.
@@ -274,8 +275,6 @@ is the fix; Azure Artifact Signing is the cheapest legitimate route.
 - **Import matches cards by id, then by name plus a shared tag.** Two genuinely different cards that
   share a name and a subject look like one card to it. Skip or replace is the whole conflict story;
   there is no merge.
-- **Statistics has no history over time.** Every figure is a lifetime total or today's. The
-  `review_log` table records a timestamp per answer, so a heatmap or a streak is a query away and
-  would be a good next feature.
-- **Answer history is per-card, not per-session.** Sessions live in memory and vanish when they end,
-  so there is no "what did I do on Tuesday" view to build from.
+- **Answer history is per-card and per-day, not per-session.** The heatmap counts a day's answers,
+  but a day is not a sitting: sessions live in memory and vanish when they end, so "what did I do
+  on Tuesday evening, and for how long" is not a view anything could be built from.

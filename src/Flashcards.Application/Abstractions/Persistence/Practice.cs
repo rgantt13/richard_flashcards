@@ -34,4 +34,11 @@ public interface IStatsReadStore
     Task<OverallStats> GetOverallStatsAsync(CancellationToken cancellationToken);
 
     Task<CardStats> GetCardStatsAsync(Guid cardId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Answers per local day over a window ending today. Days with nothing in them come back with
+    /// zeroes rather than being missing, because the caller is drawing a calendar and a calendar
+    /// has no holes.
+    /// </summary>
+    Task<ActivityHistory> GetActivityHistoryAsync(int days, CancellationToken cancellationToken);
 }

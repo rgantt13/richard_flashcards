@@ -77,6 +77,7 @@ public static class DependencyInjection
         services.AddTransient<IQueryHandler<GetOverallStatsQuery, OverallStats>, GetOverallStatsHandler>();
         services.AddTransient<IQueryHandler<GetSubjectStatsQuery, IReadOnlyList<SubjectStats>>, GetSubjectStatsHandler>();
         services.AddTransient<IQueryHandler<GetCardStatsQuery, CardStats>, GetCardStatsHandler>();
+        services.AddTransient<IQueryHandler<GetActivityHistoryQuery, ActivityHistory>, GetActivityHistoryHandler>();
 
         // ---- media: commands ----
         services.AddTransient<ICommandHandler<SaveMediaCommand, MediaDescriptor>, SaveMediaHandler>();

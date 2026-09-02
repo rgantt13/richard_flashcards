@@ -82,3 +82,92 @@ public sealed record CardStats(
 {
     public static CardStats Empty(Guid cardId) => new(cardId, PracticeStats.Empty, null, null);
 }
+
+/// <summary>
+/// One day's answers, keyed by the day it was <em>your</em> evening — local dates, not UTC ones.
+/// A day nobody studied is still present with zeroes, so the heatmap has a cell for every square
+/// rather than gaps the view has to invent.
+/// </summary>
+public sealed record DailyActivity(DateOnly Day, int Answered, int Correct)
+{
+    public int Wrong => Answered - Correct;
+
+    public bool Studied => Answered > 0;
+}
+
+/// <summary>
+/// The answer history laid out along a calendar, which is the one thing the lifetime totals cannot
+/// tell you: whether you are still turning up.
+/// <para>
+/// The window is a fixed number of days ending today, filled in for every day in it. Streaks are
+/// counted here rather than in SQL — a gap is the absence of a row, and asking SQL about absences
+/// over a calendar means generating the calendar first. The list is already dense by the time it
+/// gets here, so the counting is a walk.
+/// </para>
+/// </summary>
+public sealed record ActivityHistory(IReadOnlyList<DailyActivity> Days)
+{
+    public static ActivityHistory Empty { get; } = new([]);
+
+    public int Answered => Days.Sum(d => d.Answered);
+
+    public int Correct => Days.Sum(d => d.Correct);
+
+    public int DaysStudied => Days.Count(d => d.Studied);
+
+    /// <summary>The most answers in any one day, which is what the heatmap scales its colours against.</summary>
+    public int BusiestDay => Days.Count == 0 ? 0 : Days.Max(d => d.Answered);
+
+    public DateOnly? From => Days.Count == 0 ? null : Days[0].Day;
+
+    public DateOnly? To => Days.Count == 0 ? null : Days[^1].Day;
+
+    /// <summary>
+    /// Days in a row up to now.
+    /// <para>
+    /// Today not being studied yet does not break the streak — it is not over until the day is.
+    /// A run that ended yesterday still reads as live all day today, which is the reading that
+    /// makes someone come back in the evening.
+    /// </para>
+    /// </summary>
+    public int CurrentStreak
+    {
+        get
+        {
+            var streak = 0;
+
+            for (var i = Days.Count - 1; i >= 0; i--)
+            {
+                if (Days[i].Studied)
+                {
+                    streak++;
+                }
+                else if (i != Days.Count - 1)
+                {
+                    break;
+                }
+            }
+
+            return streak;
+        }
+    }
+
+    public int LongestStreak
+    {
+        get
+        {
+            var best = 0;
+            var run = 0;
+
+            foreach (var day in Days)
+            {
+                run = day.Studied ? run + 1 : 0;
+                best = Math.Max(best, run);
+            }
+
+            return best;
+        }
+    }
+
+    public bool HasAnything => Answered > 0;
+}

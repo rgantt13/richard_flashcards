@@ -16,7 +16,7 @@ namespace Flashcards.Desktop.ViewModels.Shared;
 /// Lifted out of the study panel once the statistics panel needed the same three tiers. Both
 /// screens ask the same questions — how am I doing on this subject, on this card — and the only
 /// thing that differs is whether the rows can be ticked, which is what
-/// <see cref="ShowsCardSelection"/> settles. Two copies of this would have been two places for the
+/// <see cref="ShowsSelection"/> settles. Two copies of this would have been two places for the
 /// tier-to-tier reloading to drift.
 /// </para>
 /// <para>
@@ -33,11 +33,17 @@ public sealed partial class SubjectBrowserViewModel(IDispatcher dispatcher) : Ob
     public event EventHandler? SelectionChanged;
 
     /// <summary>
-    /// Whether the card tier offers tick boxes. False on the statistics panel, where picking a
-    /// card means "show me this one's record" and a second, invisible meaning would be a trap.
+    /// Whether the two tiers offer tick boxes and All/None, which is to say whether this browser is
+    /// assembling a group or showing you one thing at a time.
+    /// <para>
+    /// The study prep screen is assembling: what you tick is what you will be asked. The statistics
+    /// panel is not — there is nothing to assemble a group <em>for</em>, so a row means "show me
+    /// this one's record" and nothing else, and the subject you pick is simply the one the card
+    /// tier lists cards from. A second, invisible meaning behind the same rows would be a trap.
+    /// </para>
     /// </summary>
     [ObservableProperty]
-    private bool _showsCardSelection = true;
+    private bool _showsSelection = true;
 
     /// <summary>Anything that went wrong loading a tier. Surfaced by whichever panel owns this.</summary>
     [ObservableProperty]
@@ -96,17 +102,22 @@ public sealed partial class SubjectBrowserViewModel(IDispatcher dispatcher) : Ob
     // statistics panel it narrows what you are looking at; on the study prep screen it decides what
     // you are about to be asked. Same control, two honest readings.
 
-    public string SubjectListLabel => ShowsCardSelection ? "IN THIS SESSION" : "SHOWING CARDS FROM";
+    public string SubjectListLabel => ShowsSelection ? "IN THIS SESSION" : "SUBJECTS";
 
-    public string CardListLabel => ShowsCardSelection ? "IN THIS SESSION" : "CARDS";
+    public string SubjectListHint => ShowsSelection
+        ? $"{SelectedSubjectCount} selected"
+        : SubjectPicks.Count == 1 ? "1 subject" : $"{SubjectPicks.Count} subjects";
 
-    public string CardListHint => ShowsCardSelection
+    public string CardListLabel => ShowsSelection ? "IN THIS SESSION" : "CARDS";
+
+    public string CardListHint => ShowsSelection
         ? SelectionSummary
         : CardPicks.Count == 1 ? "1 card" : $"{CardPicks.Count} cards";
 
-    partial void OnShowsCardSelectionChanged(bool value)
+    partial void OnShowsSelectionChanged(bool value)
     {
         OnPropertyChanged(nameof(SubjectListLabel));
+        OnPropertyChanged(nameof(SubjectListHint));
         OnPropertyChanged(nameof(CardListLabel));
         OnPropertyChanged(nameof(CardListHint));
     }
@@ -146,10 +157,32 @@ public sealed partial class SubjectBrowserViewModel(IDispatcher dispatcher) : Ob
         }
 
         // Keep looking at whatever was on screen before the refresh; fall back to the first subject
-        // so the tier's readout is never blank while there is something to report.
-        FocusedSubject = SubjectPicks.FirstOrDefault(s => s.Id == focused) ?? SubjectPicks.FirstOrDefault();
+        // so the tier's readout is never blank while there is something to report. Held under the
+        // flag so this assignment does not queue a card load the line below is about to do anyway.
+        _suspendCardReload = true;
+
+        try
+        {
+            FocusedSubject = SubjectPicks.FirstOrDefault(s => s.Id == focused) ?? SubjectPicks.FirstOrDefault();
+        }
+        finally
+        {
+            _suspendCardReload = false;
+        }
+
+        OnPropertyChanged(nameof(SubjectListHint));
 
         await LoadCardsForSelectionAsync();
+    }
+
+    partial void OnFocusedSubjectChanged(SubjectPickViewModel? value)
+    {
+        // Only in inspect mode. While a group is being assembled, looking at a subject deliberately
+        // does not change which cards are on offer — the tick boxes decide that.
+        if (!ShowsSelection && !_suspendCardReload)
+        {
+            LoadSafely(LoadCardsForSelectionAsync);
+        }
     }
 
     private void OnSubjectPickChanged(object? sender, PropertyChangedEventArgs e)
@@ -164,12 +197,18 @@ public sealed partial class SubjectBrowserViewModel(IDispatcher dispatcher) : Ob
     }
 
     /// <summary>
-    /// Fills the card tier from whatever subjects are ticked, so the cards on offer are always a
-    /// subset of what the tier above is reporting on — every one of them ticked.
+    /// Fills the card tier from the subjects above it, so the cards on offer are always a subset of
+    /// what the tier above is reporting on — every one of them ticked.
+    /// <para>
+    /// Which subjects those are depends on what the rows mean here: the ticked ones while a group
+    /// is being assembled, and the single focused one while a record is being read.
+    /// </para>
     /// </summary>
     public async Task LoadCardsForSelectionAsync()
     {
-        var subjectIds = IncludedSubjects.Select(s => s.Id).ToArray();
+        var subjectIds = ShowsSelection
+            ? IncludedSubjects.Select(s => s.Id).ToArray()
+            : FocusedSubject is { } only ? [only.Id] : [];
         var focused = FocusedCard?.Id;
 
         foreach (var stale in CardPicks)
@@ -220,6 +259,7 @@ public sealed partial class SubjectBrowserViewModel(IDispatcher dispatcher) : Ob
         OnPropertyChanged(nameof(SelectedCardCount));
         OnPropertyChanged(nameof(HasCardSelection));
         OnPropertyChanged(nameof(SelectionSummary));
+        OnPropertyChanged(nameof(SubjectListHint));
         OnPropertyChanged(nameof(CardListHint));
 
         SelectionChanged?.Invoke(this, EventArgs.Empty);
