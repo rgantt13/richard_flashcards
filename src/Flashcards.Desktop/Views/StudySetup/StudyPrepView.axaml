@@ -73,10 +73,10 @@
                     IsEnabled="{Binding CanStart}"
                     Command="{Binding StartStudyCommand}">
                 <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock Text="Study" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center" />
                     <Path Data="{StaticResource IconPlay}"
                           Fill="{Binding $parent[Button].Foreground}"
                           Width="15" Height="15" Stretch="Uniform" VerticalAlignment="Center" />
-                    <TextBlock Text="Study" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center" />
                 </StackPanel>
             </Button>
         </Grid>

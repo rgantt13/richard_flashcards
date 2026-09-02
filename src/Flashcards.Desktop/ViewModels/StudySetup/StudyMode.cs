@@ -33,7 +33,6 @@ public enum StudyMode
 public sealed record StudyModeCard(
     StudyMode Mode,
     string Title,
-    string Caption,
     string Blurb,
     QuizDraw Draw,
     string AccentKey,
@@ -54,27 +53,27 @@ public sealed record StudyModeCard(
     /// <summary>The whole catalogue, in the order the tiles are laid out.</summary>
     public static IReadOnlyList<StudyModeCard> All { get; } =
     [
-        new(StudyMode.Custom, "Custom", "exactly what you pick",
+        new(StudyMode.Custom, "Custom",
             "Choose subjects and cards by hand. The only mode that shows you the whole library first.",
             QuizDraw.Random, "SemiColorPrimary", "IconTune") { PicksCards = true },
 
-        new(StudyMode.Random, "Random", "a straight shuffle",
+        new(StudyMode.Random, "Random",
             "An even draw from everything you have. No emphasis, no ranking — just cards.",
             QuizDraw.Random, "#94A3B8", "IconShuffle"),
 
-        new(StudyMode.Suggested, "Suggested", "your weakest cards",
+        new(StudyMode.Suggested, "Suggested",
             "Ranked by how often you get each card wrong, with cards you have never answered leading.",
             QuizDraw.HardestFirst, "SemiColorSuccess", "IconTarget"),
 
-        new(StudyMode.Fresh, "Fresh cards", "nothing you have seen",
+        new(StudyMode.Fresh, "Fresh cards",
             "Only cards you have never answered. The clean first pass over a deck you have just written.",
             QuizDraw.Untouched, "#14B8A6", "IconStar"),
 
-        new(StudyMode.RecentlyMissed, "Recently missed", "what you just fluffed",
+        new(StudyMode.RecentlyMissed, "Recently missed",
             "Cards whose most recent answer was wrong, newest first. Not your worst cards ever — the ones you got wrong last.",
             QuizDraw.RecentlyMissed, "SemiColorWarning", "IconReplay"),
 
-        new(StudyMode.SpeedDrill, "Speed drill", "against the clock",
+        new(StudyMode.SpeedDrill, "Speed drill",
             "A short timer on every question, and only cards the app can mark for you, so nothing waits on you grading yourself.",
             QuizDraw.Random, "SemiColorDanger", "IconTimer")
         {
@@ -82,7 +81,7 @@ public sealed record StudyModeCard(
             PrefersAutoGraded = true,
         },
 
-        new(StudyMode.Marathon, "Marathon", "the whole library",
+        new(StudyMode.Marathon, "Marathon",
             "Everything in one sitting, with no cap on how many cards. For the night before.",
             QuizDraw.Random, "#7A5AF8", "IconLayers") { HasCardCount = false },
     ];
