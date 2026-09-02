@@ -36,12 +36,10 @@
                        TextTrimming="CharacterEllipsis"
                        Text="{Binding PlacementLabel}" />
 
-            <Button Grid.Column="1" Content="Cancel" MinWidth="88"
-                    HorizontalContentAlignment="Center"
+            <Button Grid.Column="1" Content="Cancel" Classes="footer"
                     Command="{Binding CancelCommand}" />
 
-            <Button Grid.Column="3" Classes="Primary" Content="Create" MinWidth="104"
-                    HorizontalContentAlignment="Center"
+            <Button Grid.Column="3" Classes="Primary footer commits" Content="Create"
                     IsDefault="True"
                     IsEnabled="{Binding !IsBusy}"
                     Command="{Binding CreateCommand}" />

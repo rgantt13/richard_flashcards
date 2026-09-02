@@ -65,8 +65,7 @@
             arrangement the designer's footer and the study session's grading bar already use.
         -->
         <Grid DockPanel.Dock="Bottom" ColumnDefinitions="Auto,16,*,16,Auto" Margin="0,16,0,0">
-            <Button Grid.Column="0" Content="Cancel" MinWidth="92"
-                    HorizontalContentAlignment="Center"
+            <Button Grid.Column="0" Content="Cancel" Classes="footer"
                     Command="{Binding CancelCommand}" />
 
             <StackPanel Grid.Column="2" VerticalAlignment="Center" Spacing="2">
@@ -77,9 +76,8 @@
                            Text="{Binding SubjectSummary, StringFormat='{}from {0}'}" />
             </StackPanel>
 
-            <Button Grid.Column="4" Classes="Primary" MinWidth="110"
+            <Button Grid.Column="4" Classes="Primary footer commits"
                     Content="{Binding ConfirmText}"
-                    HorizontalContentAlignment="Center"
                     IsDefault="True"
                     IsEnabled="{Binding CanConfirm}"
                     Command="{Binding ConfirmCommand}" />

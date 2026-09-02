@@ -56,35 +56,6 @@
         </Style>
 
         <!--
-            ····· a button that carries a glyph beside its label ·····
-
-            Six of them on this page, so the repeated parts live here and each button's markup is
-            just the geometry and the word. The rules are keyed off the shape of the content, so a
-            button reads the same whether the glyph leads (Import) or trails (Next) — which is what
-            lets Previous and Next point the way they actually go.
-
-            Fill follows the button's own Foreground rather than being set to a colour, so a
-            disabled or hovered button takes its glyph with it. That is the same trick the row
-            action icons in the grid below use.
-        -->
-        <Style Selector="Button.iconText > StackPanel">
-            <Setter Property="Orientation" Value="Horizontal" />
-            <Setter Property="Spacing" Value="7" />
-        </Style>
-
-        <Style Selector="Button.iconText > StackPanel > Path">
-            <Setter Property="Width" Value="13" />
-            <Setter Property="Height" Value="13" />
-            <Setter Property="Stretch" Value="Uniform" />
-            <Setter Property="VerticalAlignment" Value="Center" />
-            <Setter Property="Fill" Value="{Binding $parent[Button].Foreground}" />
-        </Style>
-
-        <Style Selector="Button.iconText > StackPanel > TextBlock">
-            <Setter Property="VerticalAlignment" Value="Center" />
-        </Style>
-
-        <!--
             ····· the sort-direction toggle ·····
 
             It shows the direction you are in, and its colour says which one that is: filled while
@@ -151,7 +122,7 @@
                 <TextBlock Text="{Binding ResultSummary}" Classes="muted" />
             </StackPanel>
 
-            <Button Grid.Column="1" Classes="iconText" MinWidth="112" VerticalAlignment="Center"
+            <Button Grid.Column="1" Classes="iconText solidGlyph" MinWidth="112" VerticalAlignment="Center"
                     HorizontalContentAlignment="Center"
                     AutomationProperties.Name="Generate"
                     ToolTip.Tip="Build a prompt for making a deck with an AI assistant"
@@ -162,7 +133,7 @@
                 </StackPanel>
             </Button>
 
-            <Button Grid.Column="3" Classes="iconText" MinWidth="96" VerticalAlignment="Center"
+            <Button Grid.Column="3" Classes="iconText" MinWidth="112" VerticalAlignment="Center"
                     HorizontalContentAlignment="Center"
                     AutomationProperties.Name="Import"
                     ToolTip.Tip="Read subjects and cards out of a deck file"
@@ -173,7 +144,7 @@
                 </StackPanel>
             </Button>
 
-            <Button Grid.Column="5" Classes="iconText" MinWidth="96" VerticalAlignment="Center"
+            <Button Grid.Column="5" Classes="iconText" MinWidth="112" VerticalAlignment="Center"
                     HorizontalContentAlignment="Center"
                     AutomationProperties.Name="Export"
                     ToolTip.Tip="Write chosen subjects and cards to a deck file"
@@ -322,8 +293,7 @@
         -->
         <Grid DockPanel.Dock="Bottom" ColumnDefinitions="Auto,16,*,16,Auto" Margin="0,12,0,0">
             <!-- The chevrons lead and trail respectively, so each button points where it goes. -->
-            <Button Grid.Column="0" Classes="iconText" MinWidth="96"
-                    HorizontalContentAlignment="Center"
+            <Button Grid.Column="0" Classes="iconText footer"
                     AutomationProperties.Name="Previous"
                     Command="{Binding PreviousPageCommand}">
                 <StackPanel>
@@ -344,8 +314,7 @@
                            IsVisible="{Binding StatusMessage, Converter={StaticResource NotNull}}" />
             </StackPanel>
 
-            <Button Grid.Column="4" Classes="iconText" MinWidth="96"
-                    HorizontalContentAlignment="Center"
+            <Button Grid.Column="4" Classes="iconText footer"
                     AutomationProperties.Name="Next"
                     Command="{Binding NextPageCommand}">
                 <StackPanel>

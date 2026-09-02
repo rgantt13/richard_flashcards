@@ -73,8 +73,7 @@
 
         <!-- ····· footer ····· -->
         <Grid DockPanel.Dock="Bottom" ColumnDefinitions="Auto,16,*,16,Auto" Margin="0,14,0,0">
-            <Button Grid.Column="0" Content="Close" MinWidth="92"
-                    HorizontalContentAlignment="Center"
+            <Button Grid.Column="0" Content="Close" Classes="footer"
                     Command="{Binding CloseCommand}" />
 
             <StackPanel Grid.Column="2" VerticalAlignment="Center" Spacing="1">
@@ -85,8 +84,7 @@
                            IsVisible="{Binding StatusMessage, Converter={StaticResource NotNull}}" />
             </StackPanel>
 
-            <Button Grid.Column="4" Classes="Primary" MinWidth="150" Height="40"
-                    HorizontalContentAlignment="Center"
+            <Button Grid.Column="4" Classes="Primary iconText solidGlyph footer commits"
                     AutomationProperties.Name="Copy prompt"
                     IsEnabled="{Binding CanCopy}"
                     Command="{Binding CopyCommand}">

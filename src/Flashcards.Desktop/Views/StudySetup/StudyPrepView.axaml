@@ -44,15 +44,12 @@
 
         <!-- ····· the footer: back, status, start ····· -->
         <Grid DockPanel.Dock="Bottom" ColumnDefinitions="Auto,16,*,16,Auto" Margin="0,16,0,0">
-            <Button Grid.Column="0" Classes="iconText" MinWidth="104"
-                    HorizontalContentAlignment="Center"
+            <Button Grid.Column="0" Classes="iconText footer"
                     AutomationProperties.Name="Back"
                     Command="{Binding BackToModesCommand}">
-                <StackPanel Orientation="Horizontal" Spacing="7">
-                    <Path Data="{StaticResource IconChevronLeft}"
-                          Fill="{Binding $parent[Button].Foreground}"
-                          Width="13" Height="13" Stretch="Uniform" VerticalAlignment="Center" />
-                    <TextBlock Text="Back" VerticalAlignment="Center" />
+                <StackPanel>
+                    <Path Data="{StaticResource IconChevronLeft}" />
+                    <TextBlock Text="Back" />
                 </StackPanel>
             </Button>
 
@@ -67,16 +64,13 @@
                            Text="{Binding Browser.SelectionSummary}" />
             </StackPanel>
 
-            <Button Grid.Column="4" Classes="Primary" MinWidth="150" Height="42"
-                    HorizontalContentAlignment="Center"
+            <Button Grid.Column="4" Classes="Primary iconText solidGlyph footer commits"
                     AutomationProperties.Name="Study"
                     IsEnabled="{Binding CanStart}"
                     Command="{Binding StartStudyCommand}">
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                    <TextBlock Text="Study" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center" />
-                    <Path Data="{StaticResource IconPlay}"
-                          Fill="{Binding $parent[Button].Foreground}"
-                          Width="15" Height="15" Stretch="Uniform" VerticalAlignment="Center" />
+                <StackPanel>
+                    <TextBlock Text="Study" />
+                    <Path Data="{StaticResource IconPlay}" />
                 </StackPanel>
             </Button>
         </Grid>

@@ -36,7 +36,7 @@
             </UniformGrid>
         </Border>
 
-        <Button Content="Back to setup" Classes="Primary" HorizontalAlignment="Center"
-                Padding="22,10" Command="{Binding BackToModesCommand}" />
+        <Button Content="Back to setup" Classes="Primary footer commits"
+                HorizontalAlignment="Center" Command="{Binding BackToModesCommand}" />
     </StackPanel>
 </UserControl>
