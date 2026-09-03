@@ -360,16 +360,30 @@
                                                     VerticalAlignment="Center"
                                                     Seed="{Binding Id}" />
 
-                                <StackPanel Grid.Column="2" Spacing="2" Margin="0,0,10,0">
-                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
-                                        <Border Classes="chip" Background="{DynamicResource SemiColorFill1}"
+                                <!--
+                                    The whole cell carries the name as a tooltip, because the name
+                                    is the thing a trimmed row is hiding and this is where you
+                                    would point to ask what it was.
+                                -->
+                                <StackPanel Grid.Column="2" Spacing="2" Margin="0,0,10,0"
+                                            ToolTip.Tip="{Binding Name}">
+                                    <!--
+                                        A Grid rather than a horizontal StackPanel: a StackPanel
+                                        offers its children unlimited width along its own axis, so
+                                        TextTrimming on the name never fired and a long one ran
+                                        straight under the subject chips in the next column.
+                                    -->
+                                    <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+                                        <TextBlock Grid.Column="0" Text="{Binding Name}" FontWeight="SemiBold"
+                                                   TextTrimming="CharacterEllipsis" MaxLines="1" />
+                                        <Border Grid.Column="1" Classes="chip" Background="{DynamicResource SemiColorFill1}"
                                                 IsVisible="{Binding IsSuspended}">
                                             <TextBlock Text="suspended" FontSize="10" />
                                         </Border>
-                                        <TextBlock Text="img" FontSize="10" Opacity="0.5" VerticalAlignment="Center"
+                                        <TextBlock Grid.Column="2" Text="img" FontSize="10" Opacity="0.5"
+                                                   VerticalAlignment="Center"
                                                    IsVisible="{Binding HasImages}" />
-                                    </StackPanel>
+                                    </Grid>
                                     <TextBlock Text="{Binding QuestionPreview}" Classes="muted"
                                                TextTrimming="CharacterEllipsis" MaxLines="1" />
                                 </StackPanel>

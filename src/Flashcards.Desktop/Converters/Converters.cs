@@ -220,6 +220,7 @@ public sealed class CardTypeGlyphConverter : IValueConverter
             {
                 CardType.MultipleChoice => "choice",
                 CardType.Cloze => "cloze",
+                CardType.Freeform => "custom",
                 _ => "basic",
             }
             : string.Empty;

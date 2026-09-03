@@ -245,7 +245,13 @@
                     <Border Height="1" Background="{DynamicResource SemiColorBorder}"
                             IsVisible="{Binding ShowsQuestion}" />
 
-                    <Border Classes="card" Padding="26">
+                    <!--
+                        A cloze card has no answer blocks — it reveals in place — so without this
+                        the reveal drew an empty card under the question and looked like something
+                        had failed to load.
+                    -->
+                    <Border Classes="card" Padding="26"
+                            IsVisible="{Binding Current.AnswerBlocks.Count, Converter={StaticResource AnyItems}}">
                         <ctrl:RichContentPresenter Blocks="{Binding Current.AnswerBlocks}"
                                                    HideClozeAnswers="False"
                                                    ContentFontSize="16" />
